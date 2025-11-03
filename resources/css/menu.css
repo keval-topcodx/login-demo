@@ -1,0 +1,129 @@
+.cart-page {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    box-shadow: -5px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    height: 100vh;
+    max-height: 100vh;
+    width: 600px;
+}
+.show-cart {
+    display: block;
+    z-index: 10;
+    background-color: #b6ecf6;
+}
+.hide-cart-button{
+    margin-left: auto;
+    padding: 5px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 15px;
+    background-color: black;
+    color: white;
+}
+.overlay{
+    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+    display: none;
+}
+.show-cart ~ .overlay{
+    display: block;
+}
+
+.cart-section {
+    padding: 20px;
+}
+.section-header {
+    display: flex;
+    align-items: center;
+}
+
+.cart-item-image {
+    object-fit: cover;
+    width: 100px;
+    aspect-ratio: 1 / 1;
+    border-radius: 5px;
+}
+.cart-image {
+    display: flex;
+    align-items: center;
+    width: 20%;
+}
+.cart-container {
+    padding-bottom: 50px;
+}
+.cart-card {
+    display: flex;
+    padding: 1rem;
+    width: 540px;
+    border: 1px solid transparent;
+}
+.cart-item-details > p {
+    margin: 7px 0;
+}
+.cart-item-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: baseline;
+    margin-left: 20px;
+    width: 50%;
+}
+.cart-price-details {
+    margin-left: auto;
+    margin-right: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 15%;
+}
+.remove-from-cart-button {
+    padding: 5px;
+    color: black;
+    width: 25px;
+    aspect-ratio: 1 / 1;
+    background-color: grey;
+    border: none;
+    border-radius: 5px;
+}
+.cart-item-price {
+    font-size: 1.1rem;
+}
+.cart {
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    /*padding-bottom: 50px; !* Add padding equal to the .order-price height *!*/
+    overflow-y: auto; /* Allow scrolling if items overflow */
+}
+/*.order-details-container {*/
+/*    */
+/*}*/
+
+.order-price {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 600px;
+    z-index: 1000;
+    text-align: center;
+    padding: 10px;
+}
+
+.cart-quantity {
+    max-width: 75px;
+    padding: 4px;
+}
+.order-price-button {
+    width: 100%;
+    padding: 10px;
+    color: white;
+    font-weight: 600;
+    border: none;
+}
+

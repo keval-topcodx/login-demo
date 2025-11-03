@@ -12,8 +12,8 @@ export default defineConfig({
                 'resources/js/cart.js',
                 'resources/css/menu.css',
                 'resources/js/giftcard.js',
-                'resources/js/checkout.js'],
-
+                'resources/js/checkout.js',
+                'resources/js/order.js'],
             refresh: true,
         }),
         tailwindcss(),

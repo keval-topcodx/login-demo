@@ -24,6 +24,7 @@ class Product extends Model implements HasMedia
     protected $casts = [
         'images' => 'array',
     ];
+    protected $appends = ['image_urls'];
 
     public function getImageUrlsAttribute(): array
     {
@@ -37,6 +38,11 @@ class Product extends Model implements HasMedia
 
         return $urls;
     }
+//    public function getFirstImageUrlAttribute()
+//    {
+//        return $this->getFirstMediaUrl('products') ?: '/default-image.jpg';
+//    }
+
 
 //    protected function imageUrls(): Attribute
 //    {

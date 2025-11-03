@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProductVariant;
+use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrderRequest;
 use App\Models\Order;
 use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\VoucherService;
 
 
 class OrderController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
         $cartCollection = \Cart::getContent();
@@ -23,6 +27,17 @@ class OrderController extends Controller
         return view('order.display', ['cartItems' => $cartCollection, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'cartConditions' => $cartConditions]);
     }
 
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(CreateOrderRequest $request)
     {
         $input = $request->validated();
@@ -46,9 +61,57 @@ class OrderController extends Controller
         return redirect()->route('checkout');
     }
 
+    /**
+     * Display the specified resource.
+     */
+    public function show(Order $order)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Order $order)
+    {
+//        \Cart::clearCartConditions();
+//        \Cart::clear();
+        $orderItems = $order->items;
+//        foreach ($orderItems as $orderItem) {
+//            \Cart::add([
+//                'id'       => $orderItem->variant_id,
+//                'name'     => $orderItem->variant->product->title,
+//                'price'    => $orderItem->price,
+//                'quantity' => $orderItem->quantity,
+//                'attributes' => array(
+//                    'size' => $orderItem->variant->title,
+//                    'image' => $orderItem->variant->product->image_urls,
+//                    'shipping_address' => '',
+//                )
+//            ]);
+//        }
+        return view('order.edit', ['order' => $order, 'orderItems' => $orderItems]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update( Request $request, Order $order)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Order $order)
+    {
+        dd("Order Delete");
+    }
+
     public function displayUserOrders()
     {
-        $orders = Order::all();
+        $orders = Order::with('user')->get();
         return view('user-orders.index', ['orders' => $orders]);
     }
 
@@ -86,4 +149,39 @@ class OrderController extends Controller
         ]);
     }
 
+    public function addToOrder(Request $request)
+    {
+        $variantIds = $request->input("variants");
+        $variants = ProductVariant::whereIn('id', $variantIds)
+            ->with('product')
+            ->get();
+
+
+//        foreach ($variants as $variant) {
+//            $existingItem = \Cart::get($variant->id);
+//
+//            if ($existingItem) {
+//                \Cart::update($variant->id, [
+//                    'quantity' => 1
+//                ]);
+//            } else {
+//                \Cart::add([
+//                    'id'       => $variant->id,
+//                    'name'     => $variant->product->title,
+//                    'price'    => $variant->price ?? 0,
+//                    'quantity' => 1,
+//                    'attributes' => [
+//                        'size' => $variant->title,
+//                        'image' => $variant->product->image_urls[0] ?? null,
+//                        'shipping_address' => '',
+//                    ]
+//                ]);
+//            }
+//        }
+////        dd(\Cart::getContent());
+        return response()->json([
+           'success' => true,
+            'variants' => $variants,
+        ]);
+    }
 }

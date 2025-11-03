@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Tag;
 use http\Env\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use function League\Uri\UriTemplate\replaceList;
 
 class ProductController extends Controller
 {
@@ -201,6 +203,46 @@ class ProductController extends Controller
                 'success' => false,
              ]);
          }
+     }
+
+     public function searchProducts(Request $request)
+     {
+         $data = $request->input("search");
+
+         if (strlen(trim($data)) > 0) {
+             $variants = ProductVariant::with('product')
+                 ->whereHas('product', function ($query) use ($data) {
+                     $query->where('title', 'like', '%' . $data . '%');
+                 })
+                 ->get();
+         } else {
+             $variants = ProductVariant::with('product')->get();
+         }
+
+         return response()->json([
+             "success" => true,
+             'variants' => $variants
+         ]);
+
+     }
+
+     public function searchProductVariants(Request $request)
+     {
+         $data = $request->input("search");
+         if (strlen(trim($data)) > 0) {
+             $variants = ProductVariant::with('product')
+                 ->whereHas('product', function ($query) use ($data) {
+                     $query->where('title', 'like', '%' . $data . '%');
+                 })
+                 ->get();
+         } else {
+             $variants = ProductVariant::with('product')->get();
+         }
+
+         return response()->json([
+             "success" => true,
+             'variants' => $variants
+         ]);
      }
 
 

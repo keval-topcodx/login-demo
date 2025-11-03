@@ -74,8 +74,9 @@ Route::post('/remove-from-cart', [MenuController::class, 'removeFromCart'])->nam
 Route::post('order/update-cart', [MenuController::class, 'updateCart'])->name('order.update-cart');
 Route::post('order/remove-from-cart', [MenuController::class, 'removeFromCart'])->name('order.remove-from-cart');
 
-Route::get('/order', [OrderController::class, 'index'])->name('order.index');
-Route::post('order/store', [OrderController::class, 'store'])->name('order.store');
+//Route::get('/order', [OrderController::class, 'index'])->name('order.index');
+//Route::post('order/store', [OrderController::class, 'store'])->name('order.store');
+Route::resource('/order', OrderController::class);
 
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
@@ -94,27 +95,6 @@ Route::post('/remove-giftcard', [OrderController::class, 'removeGiftCard'])->nam
 Route::resource('roles', RoleController::class)->middleware(['role:admin']);
 Route::resource('permissions', PermissionController::class)->middleware(['role:admin']);
 
-
-Route::get('/try',
-    function() {
-    $user = User::find(2);
-    if ($user->hasPermissionTo(1)
-    ){
-        dd(1);
-    } else {
-        dd(2);
-    }
-
-//    $permissions = $user->permissions;
-//    $permissions = $user->getPermissionsViaRoles();
-//dd($permissions);
-//    $users = User::with('permissions')->get();
-//    dd($users);
-//    $allRolesInDatabase = Role::all()->pluck('name');
-//    dd($allRolesInDatabase);
-//    $usersWithoutAnyRoles = User::doesntHave('roles')->get();
-//dd($usersWithoutAnyRoles);
-//    $users = User::permission('create_user')->get(); // Returns only users with the role 'writer'
-//dd($users);
-//    dd($permissions);
-});
+Route::post('/search-products', [ProductController::class, 'searchProducts'])->name('search-products');
+Route::post('/search-product-variants', [ProductController::class, 'searchProductVariants'])->name('search-product-variants');
+Route::post('/add-to-order', [OrderController::class, 'addToOrder'])->name('order.addToOrder');

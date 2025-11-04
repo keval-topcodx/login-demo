@@ -4,7 +4,7 @@
 
 @section('content')
     <div class="container form-section mt-5">
-        <h2 class="mb-4">Edit Order - {{ $order->id }}</h2>
+        <h2 class="mb-4" id="orderId" data-id="{{$order->id}}">Edit Order - {{ $order->id }}</h2>
 
 
 
@@ -25,7 +25,7 @@
                     @foreach($order->items as $item)
                         <div class="item-card d-flex align-items-center justify-content-between py-3 border-bottom"
                              data-variant="{{ $item['variant_id'] }}"
-                             data-size="{{ $item->variant->size }}"
+                             data-size="{{ $item->variant->title }}"
                              data-price="{{ $item->variant->price }}"
                              data-name="{{ $item->variant->product->title }}"
                              data-image="{{ $item->variant->product->image_urls[0] }}">
@@ -75,15 +75,23 @@
                         <span>Subtotal</span>
                         <span class="subtotal">${{$order->subtotal}}</span>
                     </div>
+                    @if($order->discount && $order->discount->name)
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{$order->discount->name}}</span>
+                            <span class="discount" data-discount="{{$order->discount->amount}}">-${{abs($order->discount->amount)}}</span>
+                        </div>
+                    @endif
 
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>{{$order->discount->name}}</span>
-                        <span class="discount" data-discount="{{$order->discount->amount}}">-${{abs($order->discount->amount)}}</span>
-                    </div>
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Total</span>
-                        <span class="total">${{$order->subtotal + $order->discount->amount}}</span>
+                        <span class="total">
+                            @if($order->discount && $order->discount->name)
+                                ${{$order->subtotal + $order->discount->amount}}
+                            @else
+                                ${{$order->subtotal}}
+                            @endif
+                        </span>
                     </div>
 
                     <hr>
@@ -103,7 +111,13 @@
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Updated total</span>
-                        <span class="total">${{$order->subtotal + $order->discount->amount}}</span>
+                        <span class="total">
+                            @if($order->discount && $order->discount->name)
+                                ${{$order->subtotal + $order->discount->amount}}
+                            @else
+                                ${{$order->subtotal}}
+                            @endif
+                        </span>
                     </div>
 
                     <div class="d-flex justify-content-between mb-3">

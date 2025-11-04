@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductVariant;
+use App\Services\RefundService;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrderRequest;
 use App\Models\Order;
-use App\Models\Product;
-use Illuminate\Support\Facades\Auth;
 use App\Services\VoucherService;
+use Illuminate\Support\Facades\DB;
+use App\Services\OrderService;
 
 
 class OrderController extends Controller
@@ -18,13 +19,20 @@ class OrderController extends Controller
      */
     public function index()
     {
+        if (\Cart::isEmpty()) {
+            return redirect()->back()->with('message', 'Your cart is empty!');
+        }
         $cartCollection = \Cart::getContent();
         $cartSubTotal = \Cart::getSubTotal();
 //        $cartTotal = \Cart::getTotal();
         $cartTotal = number_format(\Cart::getTotal(), 2, '.', '');
         $cartConditions = \Cart::getConditions();
+        $lastOrder = auth()->user()->orders()->latest()->first();
+        $shippingInfo = json_decode($lastOrder->shipping_address, true);
 
-        return view('order.display', ['cartItems' => $cartCollection, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'cartConditions' => $cartConditions]);
+
+        return view('order.display', ['cartItems' => $cartCollection, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'cartConditions' => $cartConditions, 'shippingInfo' => $shippingInfo,
+        ]);
     }
 
     /**
@@ -40,6 +48,9 @@ class OrderController extends Controller
      */
     public function store(CreateOrderRequest $request)
     {
+        if(\Cart::isEmpty()) {
+            return redirect()->route('menu.index')->with('success', 'Your Cart is empty.');
+        }
         $input = $request->validated();
         $shipping_address = json_encode($input);
 
@@ -74,31 +85,64 @@ class OrderController extends Controller
      */
     public function edit(Order $order)
     {
-//        \Cart::clearCartConditions();
-//        \Cart::clear();
         $orderItems = $order->items;
-//        foreach ($orderItems as $orderItem) {
-//            \Cart::add([
-//                'id'       => $orderItem->variant_id,
-//                'name'     => $orderItem->variant->product->title,
-//                'price'    => $orderItem->price,
-//                'quantity' => $orderItem->quantity,
-//                'attributes' => array(
-//                    'size' => $orderItem->variant->title,
-//                    'image' => $orderItem->variant->product->image_urls,
-//                    'shipping_address' => '',
-//                )
-//            ]);
-//        }
+
         return view('order.edit', ['order' => $order, 'orderItems' => $orderItems]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update( Request $request, Order $order)
+    public function update( Request $request, Order $order, OrderService $orderService)
     {
-        //
+        $amount_to_collect = (float) $request->input("amount");
+        $action = $request->input("action");
+        $orderData = $request->input("order");
+        $discount = isset($order->discount->amount) ? $order->discount->amount : 0;
+        $amount_paid = (int) $order->amount_paid;
+
+        $user = auth()->user();
+        $paymentMethod = $user->paymentMethods()->first();
+
+        if($action == "chargeAmount") {
+            DB::beginTransaction();
+
+            try {
+                $stripeCharge = $request->user()->charge(
+                    $amount_to_collect * 100,
+                    $paymentMethod->id,
+                    [
+                        'return_url' => route('menu.index'),
+                    ]
+                );
+                $paymentId = $stripeCharge->id;
+
+                $orderService->updateOrderAndItems($order, $orderData, $discount, $paymentId, $amount_to_collect);
+                DB::commit();
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Payment successful. Order updated.'
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 400,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        } elseif ($action == "refundAmount") {
+            $refundObject = new refundService;
+            $refundObject->refundAmount($order, $amount_to_collect);
+            $orderService->updateOrderAndItems($order, $orderData, $discount, 0, 0);
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Refund successful. Order updated.'
+            ]);
+        }
+        return response()->json([
+           'error' => 'order not charged',
+            'status' => 401,
+        ]);
     }
 
     /**
@@ -156,32 +200,15 @@ class OrderController extends Controller
             ->with('product')
             ->get();
 
-
-//        foreach ($variants as $variant) {
-//            $existingItem = \Cart::get($variant->id);
-//
-//            if ($existingItem) {
-//                \Cart::update($variant->id, [
-//                    'quantity' => 1
-//                ]);
-//            } else {
-//                \Cart::add([
-//                    'id'       => $variant->id,
-//                    'name'     => $variant->product->title,
-//                    'price'    => $variant->price ?? 0,
-//                    'quantity' => 1,
-//                    'attributes' => [
-//                        'size' => $variant->title,
-//                        'image' => $variant->product->image_urls[0] ?? null,
-//                        'shipping_address' => '',
-//                    ]
-//                ]);
-//            }
-//        }
-////        dd(\Cart::getContent());
         return response()->json([
            'success' => true,
             'variants' => $variants,
         ]);
+    }
+
+    public function updateOrder(Request $request, Order $order)
+    {
+        $data = $request->input();
+        dd($data);
     }
 }

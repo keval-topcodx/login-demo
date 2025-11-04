@@ -31,6 +31,8 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         'phone_no',
         'email_verified_at',
         'remember_token',
+        'shipping_address',
+        'credits',
     ];
 
     /**
@@ -53,12 +55,18 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'shipping_address' => 'array',
         ];
     }
 
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class)->chaperone();
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(CreditLog::class)->chaperone();
     }
 
 }

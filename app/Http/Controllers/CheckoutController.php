@@ -8,18 +8,31 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
+use Stripe\Customer;
+
 
 class CheckoutController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
         Stripe::setApiKey(env('STRIPE_SECRET'));
         $amount = \Cart::getTotal();
+
+        if (empty($user->stripe_id)){
+            $user->createAsStripeCustomer();
+        }
 
         $paymentIntent = PaymentIntent::create([
             'amount' => ($amount * 100), // Amount in cents
             'currency' => 'usd',
             'automatic_payment_methods' => ['enabled' => true],
+//            'automatic_payment_methods' => [
+//                'enabled' => true,
+//                'allow_redirects' => 'never'
+//            ],
+            'customer' => $user->stripe_id,
+            'setup_future_usage' => 'off_session',
         ]);
 
         return view('checkout.index', ['clientSecret' => $paymentIntent->client_secret]);
@@ -44,7 +57,11 @@ class CheckoutController extends Controller
         $order = Order::create([
             'user_id' => $userId,
             'shipping_address' => $shipping_address,
-            'subtotal' => $cartSubTotal,
+            'total' => $cartTotal,
+            'amount_paid' => $cartTotal,
+        ]);
+        $user->update([
+            'shipping_address' => json_decode($shipping_address),
         ]);
 
         foreach ($cartCollection as $item) {
@@ -76,7 +93,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $order->payment()->create([
+        $order->payments()->create([
             'payment_id' => $paymentId,
             'amount' => $cartTotal,
             'refunded_amount' => 0,
@@ -87,5 +104,19 @@ class CheckoutController extends Controller
             'status' => 200,
             'message' => 'Payment Successful. Order has been created.'
         ]);
+    }
+
+    public function updateOrderCheckout(Request $request)
+    {
+        Stripe::setApiKey(env('STRIPE_SECRET'));
+        $amount = $request->input("amount");
+
+        $paymentIntent = PaymentIntent::create([
+            'amount' => ($amount * 100), // Amount in cents
+            'currency' => 'usd',
+            'automatic_payment_methods' => ['enabled' => true],
+        ]);
+
+        return view('checkout.index', ['clientSecret' => $paymentIntent->client_secret]);
     }
 }

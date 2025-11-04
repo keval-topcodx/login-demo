@@ -12,6 +12,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
+use Psy\Util\Str;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -105,5 +106,28 @@ class UserController extends Controller
         $user->delete();
 
         return Redirect::route('users.index')->with('success', 'User deleted successfully!');
+    }
+
+    public function addCredits(Request $request, User $user)
+    {
+
+        $validated = $request->validate([
+            'credit' => ['required', 'numeric', 'decimal:0,2', 'max:99999999.99'],
+            'reason' => ['required'],
+        ]);
+        $previous_balance = (float) $user->credits ?? 0;
+        $new_balance = (float) $previous_balance + $validated['credit'];
+        $description = ucfirst(str_replace('_', ' ', $validated['reason']));
+        $user->update([
+           'credits' => $new_balance,
+        ]);
+
+        $user->logs()->create([
+            'credit_amount' => $validated['credit'],
+            'previous_balance' => $previous_balance,
+            'new_balance' => $new_balance,
+            'description' => $description,
+        ]);
+        return Redirect::back()->with('success', 'Credits added successfully!');
     }
 }

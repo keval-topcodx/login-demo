@@ -165,18 +165,17 @@ $(document).ready(function () {
     function calculateSubTotal() {
         let cards = $(".item-card");
         let subtotal = 0;
-        let discount_amount = parseInt($(".discount").data('discount'));
-        let amount_paid = $(".paid-by-customer").data('amount-paid');
+        let discount_amount = parseFloat($(".discount").data('discount')) || 0;
+        let amount_paid = parseFloat($(".paid-by-customer").data('amount-paid')) || 0;
 
         cards.each(function () {
-            let quantity = $(this).find(".order-quantity").val();
-            let price = $(this).data('price');
-
+            let quantity = parseInt($(this).find(".order-quantity").val()) || 0;
+            let price = parseFloat($(this).data('price')) || 0;
             subtotal += (quantity * price);
         });
         $(".subtotal").text(`$${subtotal.toFixed(2)}`);
         $(".total").text(`$${(subtotal + discount_amount).toFixed(2) }`);
-        $(".amount-to-collect").text(`${(subtotal + discount_amount - amount_paid).toFixed(2)}`)
+        $(".amount-to-collect").text(`$${(subtotal + discount_amount - amount_paid).toFixed(2)}`);
     }
 
     $("#updateOrder").on("click", function() {
@@ -184,20 +183,61 @@ $(document).ready(function () {
         let subtotal = 0;
         let discount_amount = parseInt($(".discount").data('discount'));
         let amount_paid = $(".paid-by-customer").data('amount-paid');
+        let orderData = [];
 
         cards.each(function () {
             let quantity = $(this).find(".order-quantity").val();
             let price = $(this).data('price');
+            let variant = $(this).data('variant');
+            let size = $(this).data('size');
+            let name = $(this).data('name');
+            let image = $(this).data('image');
+
+            orderData.push({
+                quantity: quantity,
+                price: price,
+                variant: variant,
+                size: size,
+                name: name,
+                image: image
+            });
 
             subtotal += (quantity * price);
         });
-
-        let amount_to_collect = (subtotal + discount_amount - amount_paid).toFixed(2);
+        let discount = discount_amount || 0;
+        let amount_to_collect = (subtotal + discount - amount_paid).toFixed(2);
+        console.log(amount_to_collect);
         if(amount_to_collect <= 0.50 ) {
-            //stripe error if amount less than 0.50 usd
-            alert("Amount to collect must be greater than 0.50 USD");
-        } else {
+            console.log(amount_to_collect);
 
+            let id = $("#orderId").data('id');
+            $.ajax({
+                url: `/order/${id}?action=refundAmount`,
+                type: 'PUT',
+                data: {amount: amount_to_collect, order: orderData, discount: discount},
+                success: function(response) {
+                    if(response.status == 200) {
+                        window.location.href = '/menu';
+                    } else {
+                        alert(response.error);
+                    }
+                }
+            });
+
+        } else {
+            let id = $("#orderId").data('id');
+            $.ajax({
+                url: `/order/${id}?action=chargeAmount`,
+                type: 'PUT',
+                data: {amount: amount_to_collect, order: orderData, discount: discount},
+                success: function(response) {
+                    if(response.status == 200) {
+                        window.location.href = '/menu';
+                    } else {
+                        alert(response.error);
+                    }
+                }
+            })
         }
     });
 

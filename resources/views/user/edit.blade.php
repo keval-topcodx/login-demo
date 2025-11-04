@@ -136,10 +136,48 @@
 
                 </div>
 
-            <div class="d-flex gap-2 mt-5">
-                <button type="submit" class="btn btn-primary">Submit</button>
-                <button type="reset" class="btn btn-secondary">Reset</button>
+                <div class="d-flex gap-2 mt-5">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </div>
             </div>
         </form>
+
+        <form id="creditForm" class="form" method="post" action="{{route('users.add-credits', $user)}}">
+
+            @csrf
+
+            <div class="card p-5 shadow-sm">
+                <h4 class="header" id="credit">Current Credit: ${{$user->credits ?? '0.00'}}</h4>
+                <div class="row mb-3 mt-3">
+                    <div class="col-md-6">
+                        <label for="credit" class="form-label">Credit Amount</label>
+                        <input class="form-control" type="number" name="credit" id="credit" placeholder="Enter credit amount" step="0.01" value="{{old('credit')}}">
+                        @error('credit')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reason" class="form-label">Choose a Reason</label>
+                        <select class="form-select" name="reason" id="reason">
+                            <option value="missing_product">Missing Product</option>
+                            <option value="no_stock">No Stock</option>
+                            <option value="product_quality">Product Quality</option>
+                            <option value="delivery_issue">Delivery Issue</option>
+                            <option value="foreign_object">Foreign Object</option>
+                            <option value="technical_error">Technical Error</option>
+                            <option value="duplicate_order">Duplicate Order</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" id="add" class="btn btn-primary px-3 py-1">ADD CREDIT</button>
+                </div>
+
+
+            </div>
+        </form>
+
     </div>
 @endsection

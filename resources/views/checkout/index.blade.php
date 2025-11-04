@@ -1,6 +1,6 @@
 @extends('layout.app')
 
-@section('title', 'Create Page')
+@section('title', 'Checkout Page')
 
 @section('content')
     <form id="payment-form">
@@ -22,7 +22,6 @@
         paymentElement.mount('#card-element');
 
         window.checkoutSuccessUrl = "{{ route('menu.index') }}";
-        {{--window.checkoutCancelUrl = "{{ route('checkout-cancel') }}";--}}
 
     </script>
 

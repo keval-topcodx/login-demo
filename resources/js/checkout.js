@@ -29,8 +29,7 @@ $(document).ready(function () {
                data: {paymentId: result.paymentIntent.id},
                success: function (response) {
                     if(response.status == 200) {
-
-                        window.location.href = '/menu?message=' + encodeURIComponent(response.message);
+                        window.location.href = '/menu';
                     }
                }
             });

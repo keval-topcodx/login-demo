@@ -25,6 +25,7 @@ Route::get('/dashboard', function() {
 Route::middleware(['authenticate', 'isEmailVerified', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class)
         ->withoutMiddlewareFor(['create', 'store'], ['authenticate', 'isEmailVerified', 'role:admin']);
+    Route::post('/users/add-credits/{user}', [UserController::class, 'addCredits'])->name('users.add-credits');
 });
 
 Route::get('/', function () {

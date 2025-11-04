@@ -8,12 +8,16 @@
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/css/menu.css'])
 </head>
 <body class="bg-light p-4">
+@php
+    $isMenuPage = Route::currentRouteName() == 'menu.index';
+    $isCheckoutPage = Route::currentRouteName() == 'checkout';
+@endphp
+@unless($isCheckoutPage)
 <nav class="navbar bg-light border-bottom px-4">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <div>
-            @php
-                $isMenuPage = Route::currentRouteName() == 'menu.index';
-            @endphp
+
+
 
             <a href="{{ route('dashboard') }}" class="text-decoration-none me-3 text-black">Dashboard</a>
             <a href="{{ route('menu.index') }}" class="text-decoration-none me-3 text-black">Menu</a>
@@ -27,6 +31,7 @@
                 <a href="{{ route('roles.index') }}" class="text-decoration-none me-3 text-black">Roles</a>
                 <a href="{{ route('permissions.index') }}" class="text-decoration-none me-3 text-black">Permissions</a>
             @endunless
+
             @endrole
 
         </div>
@@ -50,6 +55,7 @@
         </div>
     </div>
 </nav>
+@endunless
 
 
 

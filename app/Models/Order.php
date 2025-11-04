@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 
 
 class Order extends Model
@@ -13,17 +15,25 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'shipping_address',
-        'subtotal',
+        'total',
+        'amount_paid',
     ];
+
+    protected function subtotal(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->items->sum(fn ($item) => $item->quantity * $item->price)
+        );
+    }
 
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class)->chaperone();
     }
 
-    public function payment(): HasOne
+    public function payments(): HasMany
     {
-        return $this->hasOne(OrderPayments::class);
+        return $this->hasMany(OrderPayments::class)->chaperone();
     }
 
     public function discount(): HasOne

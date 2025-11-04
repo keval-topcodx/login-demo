@@ -8,6 +8,7 @@
             {{ session('success') }}
         </div>
     @endif
+
     <section class="main-section container my-5">
         <div class="row g-4">
             <!-- LEFT SIDE -->
@@ -15,7 +16,6 @@
                 <div class="shipping-card card p-4 shadow-sm">
                     <h3 class="mb-4">Shipping Details</h3>
                     <hr>
-
                     <form id="orderForm" action="{{route('order.store')}}" class="form" id="shippingForm" method="POST">
 
                         @csrf
@@ -24,7 +24,7 @@
 
                         <div class="mb-3">
                             <label for="first_name" class="form-label">First Name</label>
-                            <input type="text" class="form-control" name="first_name" id="first_name" value="{{ old('first_name') }}">
+                            <input type="text" class="form-control" name="first_name" id="first_name" value="{{ old('first_name', auth()->user()->shipping_address['first_name'] ?? '') }}">
                             @error('first_name')
                             <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -32,7 +32,7 @@
 
                         <div class="mb-3">
                             <label for="last_name" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" name="last_name" id="last_name" value="{{ old('last_name') }}">
+                            <input type="text" class="form-control" name="last_name" id="last_name" value="{{ old('last_name', auth()->user()->shipping_address['last_name'] ?? '') }}">
                             @error('last_name')
                             <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -40,7 +40,7 @@
 
                         <div class="mb-3">
                             <label for="street_address" class="form-label">Street Address</label>
-                            <input type="text" class="form-control" name="street_address" id="street_address" value="{{ old('street_address') }}">
+                            <input type="text" class="form-control" name="street_address" id="street_address" value="{{ old('street_address', auth()->user()->shipping_address['street_address'] ?? '') }}">
                             @error('street_address')
                             <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -48,7 +48,7 @@
 
                         <div class="mb-3">
                             <label for="city" class="form-label">City</label>
-                            <input type="text" class="form-control" name="city" id="city" value="{{ old('city') }}">
+                            <input type="text" class="form-control" name="city" id="city" value="{{ old('city', auth()->user()->shipping_address['city'] ?? '') }}">
                             @error('city')
                             <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -67,10 +67,22 @@
                             <div class="col-md-6 mb-3">
                                 <label for="state" class="form-label">State</label>
                                 <select name="state" id="state" class="form-select">
-                                    <option value="surat" {{ old('status') == 'surat' ? 'selected' : '' }}>Surat</option>
-                                    <option value="mumbai" {{ old('status') == 'mumbai' ? 'selected' : '' }}>Mumbai</option>
-                                    <option value="baroda" {{ old('status') == 'baroda' ? 'selected' : '' }}>Baroda</option>
-                                    <option value="pune" {{ old('status') == 'pune' ? 'selected' : '' }}>Pune</option>
+                                    <option value="surat"
+                                        {{ old('state', auth()->user()->shipping_address['state'] ?? '') == 'surat' ? 'selected' : '' }}>
+                                        Surat
+                                    </option>
+                                    <option value="mumbai"
+                                        {{ old('state', auth()->user()->shipping_address['state'] ?? '') == 'mumbai' ? 'selected' : '' }}>
+                                        Mumbai
+                                    </option>
+                                    <option value="baroda"
+                                        {{ old('state', auth()->user()->shipping_address['state'] ?? '') == 'baroda' ? 'selected' : '' }}>
+                                        Baroda
+                                    </option>
+                                    <option value="pune"
+                                        {{ old('state', auth()->user()->shipping_address['state'] ?? '') == 'pune' ? 'selected' : '' }}>
+                                        Pune
+                                    </option>
                                 </select>
                                 @error('state')
                                 <div class="text-danger">{{ $message }}</div>
@@ -80,7 +92,7 @@
 
                         <div class="mb-3">
                             <label for="postcode" class="form-label">Post Code</label>
-                            <input type="number" class="form-control" name="postcode" id="postcode" step="1" min="0" value="{{ old('city') }}">
+                            <input type="number" class="form-control" name="postcode" id="postcode" step="1" min="0" value="{{ old('postcode', auth()->user()->shipping_address['postcode'] ?? '') }}">
                             @error('postcode')
                             <div class="text-danger">{{ $message }}</div>
                             @enderror

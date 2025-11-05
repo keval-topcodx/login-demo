@@ -8,6 +8,11 @@
             {{ session('success') }}
         </div>
     @endif
+    @if (session('danger'))
+        <div class="alert alert-danger">
+            {{ session('danger') }}
+        </div>
+    @endif
 
     <section class="main-section container my-5">
         <div class="row g-4">
@@ -175,8 +180,8 @@
                             <span class="subtotal fw-semibold text-dark">${{number_format($subtotal, 2, '.', '')}}</span>
                         </div>
                         <div class="order-giftcard-info d-flex justify-content-between mb-2 small text-muted">
-                            @if($cartConditions->isNotEmpty())
-                                @foreach($cartConditions as $condition)
+                            @if($giftCardConditions->isNotEmpty())
+                                @foreach($giftCardConditions as $condition)
                                     <span>{{ ucfirst($condition->getType()) }} - {{ $condition->getName() }}
                                         <a class="remove-giftcard btn btn-danger btn-sm p-1 ms-3" style="font-size: 0.75rem; line-height: 1;">X</a>
                                     </span>
@@ -185,7 +190,18 @@
                             @endif
                         </div>
 
-{{--                        <div class="order-credit-info mb-2"></div>--}}
+{{--                        user credits--}}
+                        <div class="credits-used-info d-flex justify-content-between mb-2 small text-muted">
+                            @if($creditConditions->isNotEmpty())
+                                @foreach($creditConditions as $condition)
+                                    <span>{{ auth()->user()->first_name . " " . auth()->user()->last_name}} - {{ $condition->getName() }}
+                                        <a class="remove-giftcard btn btn-danger btn-sm p-1 ms-3" style="font-size: 0.75rem; line-height: 1;">X</a>
+                                    </span>
+                                    <span class="credits-used-value fw-semibold text-dark">{{number_format($condition->getValue(), 2, '.', '')}}</span>
+                                @endforeach
+                            @endif
+                        </div>
+
 {{--                        <div class="order-discountcode-info mb-2"></div>--}}
 {{--                        <div class="order-giftcard-info mb-2"></div>--}}
 

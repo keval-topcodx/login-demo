@@ -128,6 +128,6 @@ class UserController extends Controller
             'new_balance' => $new_balance,
             'description' => $description,
         ]);
-        return Redirect::back()->with('success', 'Credits added successfully!');
+        return Redirect::back()->with('credit', '$' . $validated['credit'] . " added for " . $description);
     }
 }

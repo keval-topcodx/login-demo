@@ -20,7 +20,7 @@ class OrderService
             ]);
         }
 
-        $total = $subtotal + $discount;
+        $total = round(abs($subtotal + $discount), 2);
         $order->update([
         'total'    => $total,
         'amount_paid' => $total,

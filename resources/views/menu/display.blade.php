@@ -12,9 +12,9 @@
         {{ request('message') }}
     </div>
 @endif
-@if (session('success'))
+@if (session('danger'))
     <div class="alert alert-danger">
-        {{ session('success') }}
+        {{ session('danger') }}
     </div>
 @endif
 <div class="container my-5">

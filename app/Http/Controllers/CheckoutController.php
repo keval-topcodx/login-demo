@@ -24,7 +24,7 @@ class CheckoutController extends Controller
         }
 
         $paymentIntent = PaymentIntent::create([
-            'amount' => ($amount * 100), // Amount in cents
+            'amount' => ($amount * 100),
             'currency' => 'usd',
             'automatic_payment_methods' => ['enabled' => true],
 //            'automatic_payment_methods' => [
@@ -49,9 +49,8 @@ class CheckoutController extends Controller
         $cartTotal = \Cart::getTotal();
         $firstItem = \Cart::getContent()->first();
         $condition = \Cart::getConditionsByType('giftcard')->first();
+        $creditCondition = \Cart::getConditionsByType('credits')->first();
         $shipping_address = $firstItem->attributes->shipping_address;
-//        $shipping_address = $cartCollection["attributes"]["shipping_address"];
-
 
 
         $order = Order::create([
@@ -77,7 +76,7 @@ class CheckoutController extends Controller
         }
 
         if ($condition) {
-            $order->discount()->create([
+            $order->discounts()->create([
                 'name'   => $condition->getType() . ' - ' . $condition->getName(),
                 'code'   => $condition->getName(),
                 'amount' => $condition->getValue(),
@@ -93,6 +92,26 @@ class CheckoutController extends Controller
             }
         }
 
+        if($creditCondition) {
+            $order->discounts()->create([
+               'name' => 'User Credits',
+               'code' => 'CREDITS - ' . $userId,
+               'amount' => $creditCondition->getValue(),
+            ]);
+            $previous_credits = $user->credits;
+            $credit_amount = $creditCondition->getValue();
+            $new_credits = $previous_credits + $credit_amount;
+
+            $user->increment('credits', $credit_amount);
+
+            $user->logs()->create([
+                'credit_amount' => $credit_amount,
+                'previous_balance' => $previous_credits,
+                'new_balance' => $new_credits,
+                'description' => "$" . abs($credit_amount) . " used in order:" . $order->id,
+            ]);
+        }
+
         $order->payments()->create([
             'payment_id' => $paymentId,
             'amount' => $cartTotal,
@@ -102,8 +121,10 @@ class CheckoutController extends Controller
         \Cart::clear();
         return response()->json([
             'status' => 200,
-            'message' => 'Payment Successful. Order has been created.'
+            'message' => 'Payment Successful. Order has been created.',
+            'redirect_url' => route('menu.index'),
         ]);
+
     }
 
     public function updateOrderCheckout(Request $request)

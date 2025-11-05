@@ -256,6 +256,7 @@ $(document).ready(function () {
                 showSubTotal(response.subtotal);
                 showQuantity(response.quantity);
                 showTotal(response.total);
+                $(".credits-used-value").text(`-${response.creditCondition.parsedRawValue}`);
             }
         });
     }
@@ -281,7 +282,7 @@ $(document).ready(function () {
                 showSubTotal(response.subtotal);
                 showQuantity(response.quantity);
                 showTotal(response.total);
-
+                $(".credits-used-value").text(`-${response.creditCondition.parsedRawValue}`);
             }
         });
     }

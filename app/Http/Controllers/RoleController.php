@@ -38,10 +38,7 @@ class RoleController extends Controller
             'name' => ['required', 'unique:roles,name', 'max:100'],
             'permissions' => ['nullable', 'array'],
         ]);
-
-        $role = Role::create([
-            'name' => $validated['name'],
-        ]);
+        $role = Role::firstOrCreate(['name' => $validated['name'], 'guard_name' => 'web']);
 
 
         $permissions = $validated['permissions'] ?? [];

@@ -75,13 +75,15 @@
                         <span>Subtotal</span>
                         <span class="subtotal">${{$order->subtotal}}</span>
                     </div>
-                    @if($order->discount && $order->discount->name)
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>{{$order->discount->name}}</span>
-                            <span class="discount" data-discount="{{$order->discount->amount}}">-${{abs($order->discount->amount)}}</span>
-                        </div>
-                    @endif
 
+                    @foreach($order->discounts as $discount)
+                        @if($discount && $discount->name)
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>{{$discount->name}}</span>
+                                <span class="discount" data-discount="{{$discount->amount}}">-${{number_format(abs($discount->amount), 2)}}</span>
+                            </div>
+                        @endif
+                    @endforeach
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Total</span>

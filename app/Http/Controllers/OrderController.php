@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductVariant;
+use App\Services\CreditService;
 use App\Services\RefundService;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrderRequest;
@@ -19,20 +20,20 @@ class OrderController extends Controller
      */
     public function index()
     {
+        app(CreditService::class)->applyCredits();
         if (\Cart::isEmpty()) {
-            return redirect()->back()->with('message', 'Your cart is empty!');
+            return redirect()->back()->with('danger', 'Your cart is empty!');
         }
         $cartCollection = \Cart::getContent();
         $cartSubTotal = \Cart::getSubTotal();
-//        $cartTotal = \Cart::getTotal();
         $cartTotal = number_format(\Cart::getTotal(), 2, '.', '');
-        $cartConditions = \Cart::getConditions();
+        $giftcardConditions = \Cart::getConditionsByType('giftcard');
+        $creditConditions = \Cart::getConditionsByType('credits');
         $lastOrder = auth()->user()->orders()->latest()->first();
         $shippingInfo = json_decode($lastOrder->shipping_address, true);
 
-
-        return view('order.display', ['cartItems' => $cartCollection, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'cartConditions' => $cartConditions, 'shippingInfo' => $shippingInfo,
-        ]);
+        return view('order.display',
+            ['cartItems' => $cartCollection, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'giftCardConditions' => $giftcardConditions, 'shippingInfo' => $shippingInfo, 'creditConditions' => $creditConditions]);
     }
 
     /**
@@ -49,7 +50,10 @@ class OrderController extends Controller
     public function store(CreateOrderRequest $request)
     {
         if(\Cart::isEmpty()) {
-            return redirect()->route('menu.index')->with('success', 'Your Cart is empty.');
+            return redirect()->route('menu.index')->with('danger', 'Your Cart is empty.');
+        }
+        if(\Cart::getTotal() <= 0.50) {
+            return redirect()->route('order.index')->with('danger', 'Order Total must be more than 0.50 usd.');
         }
         $input = $request->validated();
         $shipping_address = json_encode($input);
@@ -98,31 +102,55 @@ class OrderController extends Controller
         $amount_to_collect = (float) $request->input("amount");
         $action = $request->input("action");
         $orderData = $request->input("order");
-        $discount = isset($order->discount->amount) ? $order->discount->amount : 0;
-        $amount_paid = (int) $order->amount_paid;
+        $discount = $order->discounts->sum('amount');
+        $amount_paid = (float) $order->amount_paid;
 
         $user = auth()->user();
         $paymentMethod = $user->paymentMethods()->first();
 
         if($action == "chargeAmount") {
-            DB::beginTransaction();
-
             try {
-                $stripeCharge = $request->user()->charge(
-                    $amount_to_collect * 100,
-                    $paymentMethod->id,
-                    [
-                        'return_url' => route('menu.index'),
-                    ]
-                );
-                $paymentId = $stripeCharge->id;
+                $user_credits = isset($user->credits) ? $user->credits : 0;
+                if($user_credits > 0) {
+                    $usable_credits = min($amount_to_collect, $user_credits);
+                    $payment_amount = $amount_to_collect - $usable_credits;
 
-                $orderService->updateOrderAndItems($order, $orderData, $discount, $paymentId, $amount_to_collect);
-                DB::commit();
-                return response()->json([
-                    'status' => 200,
-                    'message' => 'Payment successful. Order updated.'
-                ]);
+                    $user->decrement('credits', $usable_credits);
+                    $discount -= $usable_credits;
+                    $user->logs()->create([
+                        'credit_amount' => -$usable_credits,
+                        'previous_balance' => $user_credits,
+                        'new_balance' => $user_credits - $usable_credits,
+                        'description' => "$" . abs($usable_credits) . " used in order:" . $order->id,
+                    ]);
+
+                    $order->discounts()->where('name', '=', 'User Credits')->decrement('amount', $usable_credits);
+
+                } else {
+                    $payment_amount = $amount_to_collect;
+                }
+
+                if($payment_amount > 0.50) {
+                    $stripeCharge = $request->user()->charge(
+                        $payment_amount * 100,
+                        $paymentMethod->id,
+                        [
+                            'return_url' => route('menu.index'),
+                        ]
+                    );
+                    $paymentId = $stripeCharge->id;
+
+                    $orderService->updateOrderAndItems($order, $orderData, $discount, $paymentId, $payment_amount);
+                    return response()->json([
+                        'status' => 200,
+                        'message' => 'Payment successful. Order updated.',
+                        'redirect_url' => route('menu.index'),
+                    ]);
+                } else {
+                    $orderService->updateOrderAndItems($order, $orderData, $discount, 0, 0);
+                    return redirect()->back()->with('message', 'payment amount of less than 0.50 can not be processed');
+                }
+
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => 400,
@@ -131,12 +159,12 @@ class OrderController extends Controller
             }
         } elseif ($action == "refundAmount") {
             $refundObject = new refundService;
-            $refundObject->refundAmount($order, $amount_to_collect);
+            $refundObject->refundAmount($order, $amount_to_collect, $discount);
             $orderService->updateOrderAndItems($order, $orderData, $discount, 0, 0);
-
             return response()->json([
                 'status' => 200,
-                'message' => 'Refund successful. Order updated.'
+                'message' => 'Refund successful. Order updated.',
+                'redirect_url' => route('menu.index'),
             ]);
         }
         return response()->json([
@@ -182,7 +210,7 @@ class OrderController extends Controller
 
     public function removeGiftCard()
     {
-        $remove = \Cart::clearCartConditions();
+        $removeGiftCard = \Cart::removeConditionsByType('giftcard');
         $cartSubTotal = \Cart::getSubTotal();
         $cartTotal = \Cart::getTotal();
         return response()->json([

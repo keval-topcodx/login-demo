@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\CreditService;
 use Illuminate\Http\Request;
 use function Carbon\int;
 
@@ -46,11 +47,12 @@ class MenuController extends Controller
     }
     public function index()
     {
+        \Cart::removeConditionsByType('credits');
         $products = Product::with(['variants', 'media'])->get();
         $cartCollection = \Cart::getContent();
         $cartSubTotal = \Cart::getSubTotal();
         $cartTotal = number_format(\Cart::getTotal(), 2, '.', '');
-        $cartConditions = \Cart::getConditions();
+        $cartConditions = \Cart::getConditionsByType('giftcard');
 
         return view('menu.display', ['products' => $products, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'cartConditions' => $cartConditions]);
     }
@@ -69,9 +71,12 @@ class MenuController extends Controller
             ),
         ));
 
+        app(CreditService::class)->applyCredits();
+
         $cartSubTotal = \Cart::getSubTotal();
         $cartTotalQuantity = \Cart::getTotalQuantity();
         $cartTotal = \Cart::getTotal();
+        $creditCondition = \Cart::getConditionsByType('credits')->first();
 
 
 
@@ -79,6 +84,7 @@ class MenuController extends Controller
             'subtotal' => $cartSubTotal,
             'quantity' => (int) $cartTotalQuantity,
             'total' => $cartTotal,
+            'creditCondition' => $creditCondition
         ]);
 
     }
@@ -86,16 +92,17 @@ class MenuController extends Controller
     {
         $data = $request->input('id');
         \Cart::remove($data);
+        app(CreditService::class)->applyCredits();
         $cartSubTotal = \Cart::getSubTotal();
         $cartTotalQuantity = \Cart::getTotalQuantity();
         $cartTotal = \Cart::getTotal();
-
-
+        $creditCondition = \Cart::getConditionsByType('credits')->first();
 
         return response()->json([
             'subtotal' => $cartSubTotal,
             'quantity' => (int) $cartTotalQuantity,
             'total' => $cartTotal,
+            'creditCondition' => $creditCondition
         ]);
 
     }
@@ -128,12 +135,13 @@ class MenuController extends Controller
         $cartSubTotal = \Cart::getSubTotal();
         $cartTotal = \Cart::getTotal();
         $cartTotalQuantity = \Cart::getTotalQuantity();
-
+        $creditCondition = \Cart::getConditionsByType('credits')->first();
 
         return response()->json([
             'subtotal' => $cartSubTotal,
             'quantity' => (int) $cartTotalQuantity,
             'total' => $cartTotal,
+            'creditCondition' => $creditCondition
         ]);
 
     }

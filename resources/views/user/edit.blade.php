@@ -143,12 +143,48 @@
             </div>
         </form>
 
+        <div class="container border rounded shadow-sm bg-white p-5 mb-5">
+            <div class="d-flex justify-content-end mb-3">
+                <button class="add-product-btn btn btn-primary" id="addProductBtn">Add Product</button>
+            </div>
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>VARIANT</th>
+                        <th>PRICE</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="table-row">
+                        <td>
+                            <input type="text" class="form-control product-search-input" placeholder="Enter Product Name">
+                        </td>
+                        <td>
+                            <select id="variant" name="variant" class="form-select">
+                                <option value="" disabled >Choose variant</option>
+                                <option value="1"></option>
+                                <option value="0"></option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control" step="0.01" placeholder="0.00">
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-variant" >Remove</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <form id="creditForm" class="form" method="post" action="{{route('users.add-credits', $user)}}">
 
             @csrf
 
             <div class="card p-5 shadow-sm">
-                <h4 class="header" id="credit">Current Credit: ${{$user->credits ?? '0.00'}}</h4>
+                <h4 class="header" id="credit">Current Credit: ${{isset($user->credits) ? $user->credits : '0.00'}}</h4>
                 <div class="row mb-3 mt-3">
                     <div class="col-md-6">
                         <label for="credit" class="form-label">Credit Amount</label>
@@ -172,12 +208,56 @@
                 </div>
 
                 <div class="mt-3">
+                    @if (session('credit'))
+                        <div class="alert alert-success">
+                            {{ session('credit') }}
+                        </div>
+                    @endif
                     <button type="submit" id="add" class="btn btn-primary px-3 py-1">ADD CREDIT</button>
                 </div>
 
 
             </div>
         </form>
-
+        @unless($user->logs->isEmpty())
+        <div class="container border rounded mt-5 bg-white p-5 shadow-sm">
+            <h4>Credit Logs</h4>
+            <table class="table table-hover w-100">
+                <thead class="">
+                    <tr>
+                        <th class="table-header">Date</th>
+                        <th>Credit Amount</th>
+                        <th>Previous Balance</th>
+                        <th>New Balance</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($user->logs->reverse() as $log)
+                    <tr>
+                        <td>
+                            {{$log->created_at}}
+                        </td>
+                        <td>
+                            {{$log->credit_amount}}
+                        </td>
+                        <td>
+                            {{$log->previous_balance}}
+                        </td>
+                        <td>
+                            {{$log->new_balance}}
+                        </td>
+                        <td>
+                            {{$log->description}}
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endunless
     </div>
+
+    @vite(['resources/js/user.js'])
+
 @endsection

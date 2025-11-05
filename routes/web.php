@@ -77,8 +77,8 @@ Route::post('order/remove-from-cart', [MenuController::class, 'removeFromCart'])
 
 //Route::get('/order', [OrderController::class, 'index'])->name('order.index');
 //Route::post('order/store', [OrderController::class, 'store'])->name('order.store');
-Route::resource('/order', OrderController::class);
-
+Route::resource('/order', OrderController::class)->except(['update']);
+Route::put('/order/{order}', [OrderController::class, 'update'])->name('order.update');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 

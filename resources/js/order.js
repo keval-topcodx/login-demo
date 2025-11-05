@@ -165,7 +165,11 @@ $(document).ready(function () {
     function calculateSubTotal() {
         let cards = $(".item-card");
         let subtotal = 0;
-        let discount_amount = parseFloat($(".discount").data('discount')) || 0;
+        let discounts = $(".discount");
+        let discount_amount = 0;
+        discounts.each(function() {
+            discount_amount +=  parseFloat($(this).data('discount'));
+        });
         let amount_paid = parseFloat($(".paid-by-customer").data('amount-paid')) || 0;
 
         cards.each(function () {
@@ -181,7 +185,11 @@ $(document).ready(function () {
     $("#updateOrder").on("click", function() {
         let cards = $(".item-card");
         let subtotal = 0;
-        let discount_amount = parseInt($(".discount").data('discount'));
+        let discount_amount = 0;
+        let discounts = $(".discount");
+        discounts.each(function() {
+            discount_amount +=  parseFloat($(this).data('discount'));
+        });
         let amount_paid = $(".paid-by-customer").data('amount-paid');
         let orderData = [];
 
@@ -206,18 +214,17 @@ $(document).ready(function () {
         });
         let discount = discount_amount || 0;
         let amount_to_collect = (subtotal + discount - amount_paid).toFixed(2);
-        console.log(amount_to_collect);
         if(amount_to_collect <= 0.50 ) {
             console.log(amount_to_collect);
 
             let id = $("#orderId").data('id');
             $.ajax({
-                url: `/order/${id}?action=refundAmount`,
+                url: `/order/${id}`,
                 type: 'PUT',
-                data: {amount: amount_to_collect, order: orderData, discount: discount},
+                data: {amount: amount_to_collect, order: orderData, discount: discount, action: 'refundAmount'},
                 success: function(response) {
                     if(response.status == 200) {
-                        window.location.href = '/menu';
+                        window.location.href = response.redirect_url;
                     } else {
                         alert(response.error);
                     }
@@ -229,10 +236,10 @@ $(document).ready(function () {
             $.ajax({
                 url: `/order/${id}?action=chargeAmount`,
                 type: 'PUT',
-                data: {amount: amount_to_collect, order: orderData, discount: discount},
+                data: {amount: amount_to_collect, order: orderData, discount: discount, action: 'chargeAmount'},
                 success: function(response) {
                     if(response.status == 200) {
-                        window.location.href = '/menu';
+                        window.location.href = response.redirect_url;
                     } else {
                         alert(response.error);
                     }

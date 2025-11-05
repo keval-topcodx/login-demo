@@ -36,9 +36,9 @@ class Order extends Model
         return $this->hasMany(OrderPayments::class)->chaperone();
     }
 
-    public function discount(): HasOne
+    public function discounts(): HasMany
     {
-        return $this->hasOne(OrderDiscount::class);
+        return $this->hasMany(OrderDiscount::class)->chaperone();
     }
 
     public function user(): BelongsTo

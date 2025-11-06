@@ -245,5 +245,32 @@ class ProductController extends Controller
          ]);
      }
 
+     public function suggestProducts(Request $request)
+     {
+         $data = $request->input("search");
+
+         if (strlen(trim($data)) > 0) {
+             $products = Product::active()->where('title', 'like', '%' . $data . '%')->get();
+             return response()->json([
+                 "success" => true,
+                 'products' => $products
+             ]);
+         } else {
+            return response()->json([
+               "success" => false,
+            ]);
+         }
+     }
+
+     public function suggestVariants(Request $request)
+     {
+         $id = $request->input("id");
+         $variants = Product::find($id)->variants()->get();
+         return response()->json([
+            "success" => true,
+            "variants" => $variants
+         ]);
+     }
+
 
 }

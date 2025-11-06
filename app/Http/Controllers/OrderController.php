@@ -30,7 +30,8 @@ class OrderController extends Controller
         $giftcardConditions = \Cart::getConditionsByType('giftcard');
         $creditConditions = \Cart::getConditionsByType('credits');
         $lastOrder = auth()->user()->orders()->latest()->first();
-        $shippingInfo = json_decode($lastOrder->shipping_address, true);
+        $shippingInfo = json_decode($lastOrder?->shipping_address, true);
+
 
         return view('order.display',
             ['cartItems' => $cartCollection, 'subtotal' => $cartSubTotal, 'total' => $cartTotal, 'giftCardConditions' => $giftcardConditions, 'shippingInfo' => $shippingInfo, 'creditConditions' => $creditConditions]);
@@ -183,7 +184,12 @@ class OrderController extends Controller
 
     public function displayUserOrders()
     {
-        $orders = Order::with('user')->get();
+        $user = auth()->user();
+        if($user->hasRole('admin')) {
+            $orders = Order::with('user')->get();
+        } else {
+            $orders = auth()->user()->orders()->with('user')->get();
+        }
         return view('user-orders.index', ['orders' => $orders]);
     }
 

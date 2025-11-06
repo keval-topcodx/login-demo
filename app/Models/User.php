@@ -68,5 +68,4 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
     {
         return $this->hasMany(CreditLog::class)->chaperone();
     }
-
 }

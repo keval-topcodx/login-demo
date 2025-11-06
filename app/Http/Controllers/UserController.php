@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Mail\SendVerificationMail;
+use App\Models\ProductVariant;
+use App\Models\UserProducts;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -94,7 +96,30 @@ class UserController extends Controller
 
         $user->syncRoles($roles);
 
-        return Redirect::route('users.index')
+        $products = $input['products'];
+        foreach ($products as $product) {
+            if (empty($product['name']) && empty($product['price'])) {
+                continue;
+            }
+            $variant = json_decode($product['variant']);
+            $variantId = $variant->id;
+            $selectedVariant = ProductVariant::find($variantId);
+            $productId = $selectedVariant->product_id;
+            $price = $product['price'];
+            UserProducts::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                ],
+                [
+                    'price' => $price,
+                ]
+            );
+
+        }
+
+        return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
     }
 

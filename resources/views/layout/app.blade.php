@@ -22,7 +22,6 @@
             <a href="{{ route('dashboard') }}" class="text-decoration-none me-3 text-black">Dashboard</a>
             <a href="{{ route('menu.index') }}" class="text-decoration-none me-3 text-black">Menu</a>
             <a href="{{ route('user-orders.index') }}" class="text-decoration-none me-3 text-black">Orders</a>
-
             @role('admin')
             @unless($isMenuPage)
                 <a href="{{ route('users.index') }}" class="text-decoration-none me-3 text-black">Users</a>

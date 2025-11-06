@@ -99,3 +99,6 @@ Route::resource('permissions', PermissionController::class)->middleware(['role:a
 Route::post('/search-products', [ProductController::class, 'searchProducts'])->name('search-products');
 Route::post('/search-product-variants', [ProductController::class, 'searchProductVariants'])->name('search-product-variants');
 Route::post('/add-to-order', [OrderController::class, 'addToOrder'])->name('order.addToOrder');
+
+Route::post('/suggest-products', [ProductController::class, 'suggestProducts'])->name('suggest-products');
+Route::post('/suggest-variants', [ProductController::class, 'suggestVariants'])->name('suggest-variants');

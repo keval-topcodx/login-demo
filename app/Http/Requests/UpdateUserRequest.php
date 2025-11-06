@@ -48,6 +48,18 @@ class UpdateUserRequest extends FormRequest
             'hobbies'   => ['required', 'array', 'min:1'],
             'hobbies.*' => ['in:reading,sports,music,travel,coding'],
             'roles' => ['nullable', 'array'],
+            'products' => ['array'],
+            'products.*.name' => ['nullable', 'string'],
+            'products.*.variant' => ['required_with:products.*.name', 'string'],
+            'products.*.price' => ['nullable', 'required_with:products.*.name', 'numeric','decimal:0,2', 'min:0'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+          'products.*.variant.required_with' => 'Select variant of the product.',
+            'products.*.price.required_with' => 'Enter price for the selected variant',
         ];
     }
 }

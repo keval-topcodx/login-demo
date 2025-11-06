@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 
 class Product extends Model implements HasMedia
 {
@@ -26,6 +27,12 @@ class Product extends Model implements HasMedia
     ];
     protected $appends = ['image_urls'];
 
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->where('status', 1);
+    }
+
     public function getImageUrlsAttribute(): array
     {
         $urls = [];
@@ -38,23 +45,6 @@ class Product extends Model implements HasMedia
 
         return $urls;
     }
-//    public function getFirstImageUrlAttribute()
-//    {
-//        return $this->getFirstMediaUrl('products') ?: '/default-image.jpg';
-//    }
-
-
-//    protected function imageUrls(): Attribute
-//    {
-//        $imageUrlsArray = [];
-//        foreach ($this->images as $image) {
-//            $path = Storage::url($image);
-//            $imageUrlsArray[] = $path;
-//        }
-//        return Attribute::make(
-//            get: fn($value) => $imageUrlsArray,
-//        );
-//    }
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->chaperone();
@@ -65,4 +55,6 @@ class Product extends Model implements HasMedia
         return $this->belongsToMany(Tag::class)
             ->withPivot('created_at', 'updated_at');
     }
+
+
 }

@@ -87,13 +87,15 @@
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Total</span>
+                        @php
+                            $totalDiscount = $order->discounts->sum('amount');
+                            $total = $order->subtotal + $totalDiscount;
+                        @endphp
+
                         <span class="total">
-                            @if($order->discount && $order->discount->name)
-                                ${{$order->subtotal + $order->discount->amount}}
-                            @else
-                                ${{$order->subtotal}}
-                            @endif
+                            ${{ $total }}
                         </span>
+
                     </div>
 
                     <hr>
@@ -114,11 +116,7 @@
                     <div class="d-flex justify-content-between mb-2">
                         <span>Updated total</span>
                         <span class="total">
-                            @if($order->discount && $order->discount->name)
-                                ${{$order->subtotal + $order->discount->amount}}
-                            @else
-                                ${{$order->subtotal}}
-                            @endif
+                            ${{$total}}
                         </span>
                     </div>
 

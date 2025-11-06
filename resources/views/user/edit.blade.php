@@ -135,6 +135,108 @@
                     @endforeach
 
                 </div>
+{{--                products--}}
+                <div class="container border rounded shadow-sm bg-white p-5 my-5">
+                    <div class="d-flex justify-content-end mb-3">
+                        <button type="button" class="add-product-btn btn btn-primary" id="addProductBtn">Add Product</button>
+                    </div>
+                    <table class="table table-bordered align-middle">
+                        <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>VARIANT</th>
+                            <th>PRICE</th>
+                            <th>ACTION</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        <tr class="table-row">
+                            <td class="align-middle product-data">
+                                <input type="text" class="form-control product-search-input" name="products[0][name]" placeholder="Enter Product Name" autocomplete="off">
+                                @error('products[0][name]')
+                                <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div>
+                                    <ul class="list-group" id="suggestedProducts" style="max-height: 200px; overflow-y: auto;">
+
+                                    </ul>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <select name="products[0][variant]" class="form-select variant-select">
+                                    <option value="" disabled >Choose variant</option>
+                                </select>
+                                @error('products[0][variant]')
+                                <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </td>
+                            <td class="align-middle">
+                                <input type="number" name="products[0][price]" class="form-control variant-price" step="0.01" placeholder="0.00">
+                                @error('products[0][price]')
+                                <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </td>
+                            <td class="text-center align-middle">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-variant" >Remove</button>
+                            </td>
+                        </tr>
+                        @foreach(old('products', []) as $index => $product)
+                            <tr class="table-row">
+                                <td class="align-middle product-data">
+                                    <input type="text" class="form-control product-search-input" name="products[{{$index}}][name]" value="{{$product['name'] ?? ''}}">
+                                    <div>
+                                        <ul class="list-group" id="suggestedProducts" style="max-height: 200px; overflow-y: auto;">
+
+                                        </ul>
+                                    </div>
+                                    @error("products.$index.name")
+                                    <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </td>
+                                <td class="align-middle">
+                                    <select name="products[{{ $index }}][variant]" class="form-select variant-select">
+                                        <option value="" disabled>Choose variant</option>
+
+                                        @if(old("products.$index.variant"))
+
+                                            @php
+                                                $variantJson = old("products.$index.variant");
+                                                $variant = $variantJson ? json_decode($variantJson, true) : null;
+                                            @endphp
+
+                                            @if($variant)
+                                                <option value="{{ $variantJson }}" selected>{{ $variant['title'] }}</option>
+                                            @else
+                                                <option value="" disabled selected>Choose variant</option>
+                                            @endif
+
+                                        @endif
+                                    </select>
+                                    @error("products.$index.variant")
+                                    <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </td>
+
+
+                                <td class="align-middle">
+                                    <input type="number" name="products[{{$index}}][price]" class="form-control variant-price" step="0.01" value="{{$product['price'] ?? ''}}">
+                                    @error("products.$index.price")
+                                    <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </td>
+                                <td class="text-center align-middle">
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-variant" >Remove</button>
+                                </td>
+
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                    <div>
+                        <input type="hidden" id="wholesalerProducts" name="wholesalerProducts" value="">
+                    </div>
+                </div>
+{{--                products--}}
 
                 <div class="d-flex gap-2 mt-5">
                     <button type="submit" class="btn btn-primary">Submit</button>
@@ -142,42 +244,6 @@
                 </div>
             </div>
         </form>
-
-        <div class="container border rounded shadow-sm bg-white p-5 mb-5">
-            <div class="d-flex justify-content-end mb-3">
-                <button class="add-product-btn btn btn-primary" id="addProductBtn">Add Product</button>
-            </div>
-            <table class="table table-bordered align-middle">
-                <thead>
-                    <tr>
-                        <th>NAME</th>
-                        <th>VARIANT</th>
-                        <th>PRICE</th>
-                        <th>ACTION</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr class="table-row">
-                        <td>
-                            <input type="text" class="form-control product-search-input" placeholder="Enter Product Name">
-                        </td>
-                        <td>
-                            <select id="variant" name="variant" class="form-select">
-                                <option value="" disabled >Choose variant</option>
-                                <option value="1"></option>
-                                <option value="0"></option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="number" class="form-control" step="0.01" placeholder="0.00">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-variant" >Remove</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
 
         <form id="creditForm" class="form" method="post" action="{{route('users.add-credits', $user)}}">
 

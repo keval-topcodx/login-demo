@@ -161,3 +161,28 @@
     margin: 0.5rem 0;
 }
 
+/*chat styles*/
+.chat-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    z-index: 9999;
+}
+
+.chat-box {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    z-index: 9999;
+    height: 500px;
+}
+
+.new-conversation-card {
+    height: 500px;
+    width: 500px;
+}

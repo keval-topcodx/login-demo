@@ -256,7 +256,9 @@ $(document).ready(function () {
                 showSubTotal(response.subtotal);
                 showQuantity(response.quantity);
                 showTotal(response.total);
-                $(".credits-used-value").text(`-${response.creditCondition.parsedRawValue}`);
+                if (response.creditCondition && response.creditCondition.parsedRawValue) {
+                    $(".credits-used-value").text(`-${response.creditCondition.parsedRawValue}`);
+                }
             }
         });
     }

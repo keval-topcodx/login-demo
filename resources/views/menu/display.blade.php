@@ -89,5 +89,26 @@
     </div>
 </div>
 
-    @vite(['resources/js/cart.js'])
+<button id="chatButton" class="btn btn-primary chat-btn">
+    💬
+</button>
+
+<div id="chatBox" class="card chat-box">
+    <div class="card-header bg-primary text-white">
+        Support Chat
+        <button id="closeChat" class="btn-close btn-close-white float-end"></button>
+    </div>
+    <div class="card-body" style="height: 200px; overflow-y: auto;">
+        <p class="text-muted">How can we help you?</p>
+    </div>
+    <div class="card-footer">
+        <form id="chatForm" class="d-flex gap-1">
+            <input type="text" name="message" class="form-control flex-grow-1" placeholder="Type your message..." autocomplete="off">
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+    </div>
+</div>
+
+
+    @vite(['resources/js/cart.js', 'resources/js/chat.js'])
 @endsection

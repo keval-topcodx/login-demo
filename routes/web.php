@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\GiftCardController;
@@ -83,7 +84,7 @@ Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 Route::post('/create-order', [CheckoutController::class, 'createOrder'])->name('create-order');
 
 
-Route::resource('/giftcards', GiftCardController::class)->middleware(['role:admin'])->middleware('authenticate');
+Route::resource('/giftcards', GiftCardController::class)->middleware(['role:admin', 'authenticate']);
 
 Route::get('/user-orders', [OrderController::class , 'displayUserOrders'])->name('user-orders.index');
 Route::post('/validate-code', [OrderController::class, 'validateCode'])->name('validate-code');
@@ -100,3 +101,6 @@ Route::post('/add-to-order', [OrderController::class, 'addToOrder'])->name('orde
 
 Route::post('/suggest-products', [ProductController::class, 'suggestProducts'])->name('suggest-products');
 Route::post('/suggest-variants', [ProductController::class, 'suggestVariants'])->name('suggest-variants');
+
+Route::resource('chat', ChatController::class);
+Route::post('/search-user', [UserController::class, 'searchUser'])->name('search-user');

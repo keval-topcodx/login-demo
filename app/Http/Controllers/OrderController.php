@@ -90,6 +90,10 @@ class OrderController extends Controller
      */
     public function edit(Order $order)
     {
+        $userId = $order->user_id;
+        if($userId != auth()->user()->id && !auth()->user()->hasRole('admin')) {
+            abort(403, 'You are not authorized to access this order.');
+        }
         $orderItems = $order->items;
 
         return view('order.edit', ['order' => $order, 'orderItems' => $orderItems]);

@@ -151,4 +151,15 @@ class UserController extends Controller
         ]);
         return redirect()->back()->with('credit', '$' . $validated['credit'] . " added for " . $description);
     }
+
+    public function searchUser(Request $request)
+    {
+        $search = $request->input("search");
+
+        $users = User::where(function($query) use ($search) {
+            $query->where('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%");
+        })->get();
+
+    }
 }

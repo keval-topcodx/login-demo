@@ -15,6 +15,7 @@ export default defineConfig({
             'resources/js/checkout.js',
             'resources/js/order.js',
             'resources/js/user.js',
+            'resources/js/chat.js',
             ],
             refresh: true,
         }),

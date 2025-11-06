@@ -184,7 +184,7 @@ class ProductController extends Controller
     {
         $product->delete();
 
-        return Redirect::route('products.index')->with('success', 'Product deleted successfully!');
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully!');
     }
 
      public function getTags(Request $request)

@@ -60,12 +60,12 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetUserPasswo
     ->middleware('guest')
     ->name('password.update');
 
-Route::resource('products', ProductController::class)->middleware(['role:admin']);
+Route::resource('products', ProductController::class)->middleware(['role:admin'])->middleware('authenticate');
 
 Route::post('products/get-tags', [ProductController::class, 'getTags'])->name('products.getTags');
 Route::post('products/{id}/get-tags', [ProductController::class, 'getTags'])->name('products.getTags.withId');
 
-Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
+Route::get('/menu', [MenuController::class, 'index'])->name('menu.index')->middleware('authenticate');
 Route::post('/add-to-cart', [MenuController::class, 'addToCart'])->name('menu.add-to-cart');
 Route::post('/render-cart-summary', [MenuController::class, 'renderCartSummary'])->name('menu.render-cart-summary');
 Route::post('/already-in-cart', [MenuController::class, 'alreadyInCart'])->name('menu.already-in-cart');
@@ -75,9 +75,7 @@ Route::post('/remove-from-cart', [MenuController::class, 'removeFromCart'])->nam
 Route::post('order/update-cart', [MenuController::class, 'updateCart'])->name('order.update-cart');
 Route::post('order/remove-from-cart', [MenuController::class, 'removeFromCart'])->name('order.remove-from-cart');
 
-//Route::get('/order', [OrderController::class, 'index'])->name('order.index');
-//Route::post('order/store', [OrderController::class, 'store'])->name('order.store');
-Route::resource('/order', OrderController::class)->except(['update']);
+Route::resource('/order', OrderController::class)->except(['update'])->middleware('authenticate');
 Route::put('/order/{order}', [OrderController::class, 'update'])->name('order.update');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
@@ -85,7 +83,7 @@ Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 Route::post('/create-order', [CheckoutController::class, 'createOrder'])->name('create-order');
 
 
-Route::resource('/giftcards', GiftCardController::class)->middleware(['role:admin']);
+Route::resource('/giftcards', GiftCardController::class)->middleware(['role:admin'])->middleware('authenticate');
 
 Route::get('/user-orders', [OrderController::class , 'displayUserOrders'])->name('user-orders.index');
 Route::post('/validate-code', [OrderController::class, 'validateCode'])->name('validate-code');
@@ -93,8 +91,8 @@ Route::post('/validate-code', [OrderController::class, 'validateCode'])->name('v
 Route::post('/remove-giftcard', [OrderController::class, 'removeGiftCard'])->name('remove-giftcard');
 
 
-Route::resource('roles', RoleController::class)->middleware(['role:admin']);
-Route::resource('permissions', PermissionController::class)->middleware(['role:admin']);
+Route::resource('roles', RoleController::class)->middleware(['role:admin'])->middleware('authenticate');
+Route::resource('permissions', PermissionController::class)->middleware(['role:admin'])->middleware('authenticate');
 
 Route::post('/search-products', [ProductController::class, 'searchProducts'])->name('search-products');
 Route::post('/search-product-variants', [ProductController::class, 'searchProductVariants'])->name('search-product-variants');

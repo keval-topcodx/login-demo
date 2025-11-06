@@ -56,7 +56,7 @@ class UserController extends Controller
 
         Mail::to($user)->send(new SendVerificationMail($user));
 
-        return Redirect::route('users.index')->with('success', 'User added successfully');
+        return redirect()->route('users.index')->with('success', 'User added successfully');
     }
 
     /**
@@ -97,6 +97,7 @@ class UserController extends Controller
         $user->syncRoles($roles);
 
         $products = $input['products'];
+        $variants = [];
         foreach ($products as $product) {
             if (empty($product['name']) && empty($product['price'])) {
                 continue;
@@ -106,18 +107,13 @@ class UserController extends Controller
             $selectedVariant = ProductVariant::find($variantId);
             $productId = $selectedVariant->product_id;
             $price = $product['price'];
-            UserProducts::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'product_id' => $productId,
-                    'variant_id' => $variantId,
-                ],
-                [
-                    'price' => $price,
-                ]
-            );
 
+            $variants[$variantId] = [
+                'product_id' => $productId,
+                'price' => $price,
+            ];
         }
+        $user->productVariants()->sync($variants);
 
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
@@ -130,7 +126,7 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return Redirect::route('users.index')->with('success', 'User deleted successfully!');
+        return redirect()->route('users.index')->with('success', 'User deleted successfully!');
     }
 
     public function addCredits(Request $request, User $user)
@@ -153,6 +149,6 @@ class UserController extends Controller
             'new_balance' => $new_balance,
             'description' => $description,
         ]);
-        return Redirect::back()->with('credit', '$' . $validated['credit'] . " added for " . $description);
+        return redirect()->back()->with('credit', '$' . $validated['credit'] . " added for " . $description);
     }
 }

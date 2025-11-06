@@ -45,7 +45,7 @@ class GiftCardController extends Controller
             'user_id' => $input['user_id'],
             'expiry_date' => $input['expiry_date'],
         ]);
-        return Redirect::route('giftcards.index')->with('success', 'giftcard added successfully');
+        return redirect()->route('giftcards.index')->with('success', 'giftcard added successfully');
 
     }
 
@@ -78,7 +78,7 @@ class GiftCardController extends Controller
             'status' => $input['status'],
         ]);
 
-        return Redirect::route('giftcards.index')
+        return redirect()->route('giftcards.index')
             ->with('success', 'Giftcard updated successfully');
     }
 
@@ -88,6 +88,6 @@ class GiftCardController extends Controller
     public function destroy(Giftcard $giftcard)
     {
         $giftcard->delete();
-        return Redirect::route('giftcards.index')->with('success', 'Giftcard deleted successfully!');
+        return redirect()->route('giftcards.index')->with('success', 'Giftcard deleted successfully!');
     }
 }

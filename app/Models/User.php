@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Laravel\Cashier\Billable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
 {
@@ -68,4 +69,15 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
     {
         return $this->hasMany(CreditLog::class)->chaperone();
     }
+
+    public function productVariants(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ProductVariant::class,
+            'user_products',
+            'user_id',
+            'variant_id'
+        )->withPivot('product_id', 'price');
+    }
+
 }

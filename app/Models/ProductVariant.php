@@ -25,13 +25,10 @@ class ProductVariant extends Model
             $user = auth()->user();
 
             if ($user && $user->hasRole('wholesaler')) {
-                $customPrice = DB::table('user_products')
-                    ->where('user_id', $user->id)
-                    ->where('variant_id', $this->id)
-                    ->value('price');
+                $variant = $user->productVariants()->find($this->id);
 
-                if ($customPrice) {
-                    return $customPrice;
+                if ($variant) {
+                    return $variant->pivot->price;
                 }
             }
             return $value;

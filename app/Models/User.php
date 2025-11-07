@@ -11,11 +11,14 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Laravel\Cashier\Billable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
+class User extends Authenticatable implements MustVerifyEmail, CanResetPassword, HasMedia
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, Billable, HasRoles;
+    use HasFactory, Notifiable, Billable, HasRoles, InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -60,6 +63,11 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         ];
     }
 
+    public function getImageUrlAttribute(): string
+    {
+        return $this->getFirstMediaUrl('users');
+    }
+
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class)->chaperone();
@@ -78,6 +86,11 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
             'user_id',
             'variant_id'
         )->withPivot('product_id', 'price');
+    }
+
+    public function chat(): HasOne
+    {
+        return $this->hasOne(Chat::class);
     }
 
 }

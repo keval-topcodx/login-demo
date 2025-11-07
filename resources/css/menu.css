@@ -186,3 +186,50 @@
     height: 500px;
     width: 500px;
 }
+
+.hover-bg:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.user-chat-list:hover {
+    background-color: lightblue !important;
+}
+
+.user-with-chat-profile:hover {
+    background-color: lightblue !important;
+}
+
+#chatMessages {
+    display: flex;
+    flex-direction: column;
+}
+
+.message-row {
+    width: 100%;
+    display: flex;
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    word-wrap: break-word;
+}
+
+/* Left message */
+.justify-content-start .message-bubble {
+    background-color: #e9ecef;
+    border-top-left-radius: 0;
+}
+
+/* Right message */
+.justify-content-end .message-bubble {
+    background-color: #0d6efd;
+    color: white;
+    border-top-right-radius: 0;
+}

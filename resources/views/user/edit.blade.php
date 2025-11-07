@@ -7,7 +7,7 @@
         <h2 class="mb-4">Edit User</h2>
 
         <!-- Replace action with your server endpoint -->
-        <form id="editUserForm" action="{{route('users.update', $user)}}" method="post" novalidate>
+        <form id="editUserForm" action="{{route('users.update', $user)}}" method="post" novalidate enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -113,6 +113,28 @@
                 <div class="text-danger">{{ $message }}</div>
                 @enderror
             </div>
+
+            <div class="my-3">
+                <label for="image" class="form-label">Image</label>
+                <input type="file" id="image" name="image" class="form-control">
+                @error('image')
+                <div class="text-danger">{{ $message }}</div>
+                @enderror
+
+            </div>
+            <div class="d-flex flex-wrap gap-3 align-items-start justify-content-start overflow-hidden">
+                @if(!empty($user->image_url))
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <img src="{{ $user->image_url }}" class="card-img-top rounded" style="object-fit: cover; height: 250px;" alt="Product image">
+                        </div>
+                    </div>
+                @else
+                    <p class="text-muted">No image available.</p>
+                @endif
+
+            </div>
+
 
             <div class="mb-4">
                 <label class="form-label d-block mb-2">Select Roles</label>

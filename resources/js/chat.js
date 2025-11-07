@@ -8,26 +8,38 @@ $.ajaxSetup({
 
 $(document).ready(function() {
     $("#chatBox").hide();
-
     $("#chatButton").on("click", function () {
         $("#chatBox").toggle();
+        $(".chat-messages").empty();
+        $.ajax({
+            url: '/load-messages',
+            type: 'POST',
+            data: {action: 'forUser'},
+            success:function (response) {
+                if(response.success) {
+                    response.messages.forEach(function (message) {
+                        const side = message['user_type'] === 'user' ? 'right' : 'left';
+                        if(message['message']) {
+                            addCardMessage(message['message'], side);
+                        } else if (message['attachment_name'] && message['attachment_url']) {
+                            addCardAttachment(message['attachment_name'], message['attachment_url'] , side);
+                        }
+                    });
+                }
+            }
+        });
     });
-
     $("#closeChat").on("click", function () {
         $("#chatBox").hide();
     });
 
+    $('#newChatBtn').on('click', function() {
+        $('#newChatCard').removeClass('d-none');
+    });
 
-        // ----------------------
-        // Toggle New Chat Card
-        // ----------------------
-        $('#newChatBtn').on('click', function() {
-            $('#newChatCard').removeClass('d-none');
-        });
-
-        $('#closeNewChat').on('click', function() {
-            $('#newChatCard').addClass('d-none');
-        });
+    $('#closeNewChat').on('click', function() {
+        $('#newChatCard').addClass('d-none');
+    });
 
     $('#activeBtn').on('click', function() {
         $(this).removeClass('btn-outline-primary').addClass('btn-primary');
@@ -47,17 +59,317 @@ $(document).ready(function() {
 
     $('#activeChats').show();
     $('#archivedChats').hide();
-$(document).on("input", "#searchUser", function() {
-    let searchValue = $(this).val().trim();
-    $.ajax({
-        url: '/search-user',
-        type: 'POST',
-        data: {search: searchValue},
-        success: function(response) {
-            console.log(response);
+
+    $(document).on("input", "#searchUser", function() {
+        let searchValue = $(this).val().trim();
+        $(".new-chat-list").empty();
+        $.ajax({
+            url: '/search-user',
+            type: 'POST',
+            data: {search: searchValue},
+            success: function(response) {
+
+                if(response.success) {
+                    response.users.forEach(function (user) {
+
+                        let imageUrl = (user.media && user.media.length > 0)
+                            ? user.media[0].original_url
+                            : "/images/default-avatar.png";
+
+                        $(".new-chat-list").append(`
+                            <li class="list-group-item chat-item d-flex align-items-center gap-3 py-2 border-0 border-bottom bg-transparent user-chat-list hover-bg"
+                              style="min-height: 70px;"
+                              data-user-id="${user.id}">
+                                <div class="flex-shrink-0" style="width: 50px; height: 50px;">
+                                    <img src="${imageUrl}"
+                                         alt="User Avatar"
+                                         class="rounded-circle w-100 h-100"
+                                         style="object-fit: cover; object-position: center; border: 2px solid #f1f1f1;">
+                                </div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <h6 class="mb-0 fw-semibold text-truncate">${user.first_name + " " + user.last_name}</h6>
+                                    <small class="text-muted text-truncate d-block">${user.email}</small>
+                                </div>
+                            </li>
+                        `);
+                    })
+                } else {
+                    $(".new-chat-list").append(`${response.message}`)
+                }
+            }
+
+        })
+    });
+    $(document).on("click", ".user-with-chat-profile", function () {
+        let userId = $(this).data('user-id');
+        let userFirstName = $(this).data('user-firstname');
+        let userLastName = $(this).data('user-lastname');
+        let userImage = $(this).data('user-image');
+        let userEmail = $(this).data('user-email');
+
+        $.ajax({
+           url: '/load-messages',
+           type: 'POST',
+           data: {id: userId, action: 'forSupport'},
+           success: function (response) {
+               addChatTitle(userId, userImage, userFirstName, userLastName, userEmail);
+               $('#chatMessages').empty();
+               response.messages.forEach(function (message) {
+                   if(message['message']) {
+                       addMessage(message['message']);
+                   } else if (message['attachment_name'] && message['attachment_url']) {
+                       addAttachment(message['attachment_name'], message['attachment_url']);
+                   }
+               });
+
+               addSendMessageForm();
+
+           }
+        });
+    });
+
+    $(document).on("click", ".user-chat-list", function() {
+        let userId = $(this).data('user-id');
+
+        $.ajax({
+            url: '/start-new-chat',
+            type: 'POST',
+            data: {id: userId},
+            success: function (response) {
+                if(response.success) {
+                    let user = response.user;
+
+                    let imageUrl = (user.media && user.media.length > 0)
+                        ? user.media[0].original_url
+                        : "/images/default-avatar.png";
+
+
+                    $("#newChatCard").addClass('d-none');
+                    addChatTitle(user.id, imageUrl, user.first_name, user.last_name, user.email);
+
+                    addSendMessageForm();
+                    $("#chatMessages").html(`
+                    <div class="d-flex align-items-center justify-content-center h-100 chat-selected-info">
+                        <p class="chats-info">No messages yet...</p>
+                    </div>
+                    `);
+
+                    $(".chats-info").text('No messages yet....');
+                }
+            }
+
+        });
+    });
+    $(document).on("click", "#attachBtn", function () {
+        $("#chatAttachment").click();
+    });
+
+    $(document).on("change", "#chatAttachment", function () {
+        if (this.files.length > 0) {
+            console.log("Files selected:", Array.from(this.files).map(f => f.name));
         }
+    });
 
-    })
-})
+    $("#userChatForm").on("submit", function (e) {
+        e.preventDefault();
+        let formData = new FormData(this);
+        formData.append('sender', 'user');
 
+        $.ajax({
+           url: '/send-message',
+           type: 'POST',
+           data: formData,
+           processData: false,
+           contentType: false,
+           success: function(response) {
+               $("#userChatForm")[0].reset();
+               if(response.success) {
+                   if(response.success) {
+                       response.chatData.forEach(function (chat) {
+                           if(chat.message) {
+                               addCardMessage(chat.message, 'right');
+                           }
+                           if(chat.attachment_name && chat.attachment_url) {
+                               addCardAttachment(chat.attachment_name, chat.attachment_url, 'right');
+                           }
+                       });
+                   }
+               }
+
+           }
+        });
+    });
+
+    $("#chatForm").on("submit", function (e) {
+        e.preventDefault();
+        let userId = $(this).parents("#chatWindow").data('user-id');
+        let formData = new FormData(this);
+        formData.append("userId", userId);
+        formData.append("sender", 'admin');
+
+        $.ajax({
+            url: '/send-message',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $("#chatForm")[0].reset();
+                $(".chat-selected-info").remove();
+                if(response.success) {
+                    response.chatData.forEach(function (chat) {
+                       if(chat.message) {
+                           addMessage(chat.message);
+                       }
+                       if(chat.attachment_name && chat.attachment_url) {
+                           addAttachment(chat.attachment_name, chat.attachment_url);
+                       }
+
+                    });
+                } else {
+                    console.log(response.message);
+                }
+            }
+        });
+
+    });
+
+    function addSendMessageForm() {
+
+        $("#chatForm").html(`
+            <input type="text" name="message" class="form-control border-0 flex-grow-1" placeholder="Type a message..." autocomplete="off">
+            <input type="file" id="chatAttachment" name="attachments[]" class="d-none" multiple>
+
+            <button type="button" id="attachBtn" class="btn btn-light rounded-circle px-3 py-2 d-flex align-items-center justify-content-center">
+                &#128206;
+            </button>
+
+            <button type="submit" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center px-3 py-2">
+                <span style='font-size:20px;'>&#10148;</span>
+            </button>
+        `);
+    }
+    function addChatTitle(userId, userImage, userFirstName, userLastName, userEmail) {
+        let chatTitle = $("#chatTitle");
+
+        chatTitle.parents("#chatWindow").data('user-id', userId);
+
+        chatTitle.html(`
+        <div class="d-flex align-items-center gap-3 border-0 bg-transparent user-info hover-bg"
+            style="min-height: 50px;"
+            data-user-id="${userId}">
+                <div class="flex-shrink-0" style="width: 50px; height: 50px;">
+                    <img src="${userImage}"
+                         alt="User Avatar"
+                         class="rounded-circle w-100 h-100"
+                         style="object-fit: cover; object-position: center; border: 2px solid #f1f1f1;">
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <h6 class="mb-0 fw-semibold text-truncate">${userFirstName + " " + userLastName}</h6>
+                    <small class="text-muted text-truncate d-block">${userEmail}</small>
+                </div>
+            </div>
+        `);
+    }
+
+    function addCardMessage(message, side = 'left') {
+        let chat = $(".chat-messages");
+        let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
+        let bubbleClass = side === 'right' ? 'bg-primary text-light' : 'bg-light text-dark';
+
+        let html = `
+        <div class="d-flex mb-2 ${justifyClass}">
+            <div class="${bubbleClass} p-2 px-3 rounded-3 shadow-sm" style="max-width: 80%;">
+                ${message}
+            </div>
+        </div>
+        `;
+        chat.append(html);
+
+        chat.scrollTop(chat[0].scrollHeight);
+    }
+
+    function addCardAttachment(name, url, side = 'left') {
+        let chat = $('.chat-messages');
+        let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
+        let bubbleClass = side === 'right' ? 'bg-primary text-white' : 'bg-light text-dark';
+
+        let fileExtension = name.split('.').pop().toLowerCase();
+
+        let attachmentHtml = '';
+
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+            attachmentHtml = `
+                            <img src="${url}" alt="${name}" class="img-fluid rounded shadow-sm" style="max-width: 200px;">
+                               <figcaption class="text-muted">${name}</figcaption>
+                            `;
+        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+            attachmentHtml = `<video src="${url}" controls class="rounded shadow-sm" style="max-width: 250px;"></video>`;
+        } else if (['mp3', 'wav'].includes(fileExtension)) {
+            attachmentHtml = `<audio controls class="w-100"><source src="${url}" type="audio/${fileExtension}">Your browser does not support audio.</audio>`;
+        } else {
+            attachmentHtml = `
+            <a href="${url}" target="_blank" class="d-inline-flex align-items-center text-decoration-none text-black">
+                <i class="bi bi-paperclip me-2"></i> ${name}
+            </a>
+        `;
+
+        }
+        const messageHtml = `
+            <div class="message-row d-flex ${justifyClass} mb-3">
+                <div class="message-bubble ${bubbleClass} p-2">${attachmentHtml}</div>
+            </div>
+        `;
+
+        chat.append(messageHtml);
+        chat.scrollTop(chat[0].scrollHeight);
+    }
+
+    function addMessage(message, side = 'right') {
+        let chat = $('#chatMessages');
+        let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
+        let bubbleClass = side === 'right' ? 'bg-primary text-white' : 'bg-light text-dark';
+
+        let messageHtml = `
+        <div class="message-row d-flex ${justifyClass} mb-3">
+            <p class="message-bubble ${bubbleClass}">${message}</p>
+        </div>
+    `;
+
+        chat.append(messageHtml);
+        chat.scrollTop(chat[0].scrollHeight);
+    }
+
+    function addAttachment(name, url, side = 'right') {
+        let chat = $('#chatMessages');
+        let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
+        let bubbleClass = side === 'right' ? 'bg-primary text-white' : 'bg-light text-dark';
+
+        let fileExtension = name.split('.').pop().toLowerCase();
+
+        let attachmentHtml = '';
+
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+            attachmentHtml = `<img src="${url}" alt="${name}" class="img-fluid rounded shadow-sm" style="max-width: 200px;">`;
+        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+            attachmentHtml = `<video src="${url}" controls class="rounded shadow-sm" style="max-width: 250px;"></video>`;
+        } else if (['mp3', 'wav'].includes(fileExtension)) {
+            attachmentHtml = `<audio controls class="w-100"><source src="${url}" type="audio/${fileExtension}">Your browser does not support audio.</audio>`;
+        } else {
+            attachmentHtml = `
+            <a href="${url}" target="_blank" class="d-inline-flex align-items-center text-decoration-none text-white">
+                <i class="bi bi-paperclip me-2"></i> ${name}
+            </a>
+        `;
+
+        }
+        const messageHtml = `
+            <div class="message-row d-flex ${justifyClass} mb-3">
+                <div class="message-bubble ${bubbleClass} p-2">${attachmentHtml}</div>
+            </div>
+        `;
+
+        chat.append(messageHtml);
+        chat.scrollTop(chat[0].scrollHeight);
+    }
 });

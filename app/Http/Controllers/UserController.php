@@ -54,6 +54,10 @@ class UserController extends Controller
             'phone_no' => $input['phone_no'],
         ]);
 
+        $user
+            ->addMedia($request->file('image'))
+            ->toMediaCollection('users');
+
         Mail::to($user)->send(new SendVerificationMail($user));
 
         return redirect()->route('users.index')->with('success', 'User added successfully');
@@ -92,6 +96,12 @@ class UserController extends Controller
             'gender' => $input['gender'],
             'phone_no' => $input['phone_no']
         ]);
+
+        if ($request->hasFile('image')) {
+            $user->clearMediaCollection('users');
+                $user->addMedia($request->file('image'))->toMediaCollection('users');
+        }
+
         $roles = $input['roles'] ?? [];
 
         $user->syncRoles($roles);
@@ -156,10 +166,22 @@ class UserController extends Controller
     {
         $search = $request->input("search");
 
-        $users = User::where(function($query) use ($search) {
-            $query->where('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%");
-        })->get();
+        $users = User::with('media')->doesntHave('chat')
+            ->whereRaw("CONCAT(first_name, last_name) LIKE ?", ["%{$search}%"])
+            ->get();
+
+        if ($users->isNotEmpty()) {
+            return response()->json([
+                'success' => true,
+                'users' => $users
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No users found.'
+            ]);
+        }
+
 
     }
 }

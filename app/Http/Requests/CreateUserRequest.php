@@ -26,6 +26,7 @@ class CreateUserRequest extends FormRequest
             'first_name' => ['bail','required', 'string', 'max:50'],
             'last_name'  => ['bail','required', 'string', 'max:50'],
             'email'      => ['bail','required', 'email', 'unique:users,email'],
+            'image' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
             'password'   => [
                 'bail',
                 'required',
@@ -39,6 +40,9 @@ class CreateUserRequest extends FormRequest
             'gender'     => ['required', 'in:male,female'],
             'hobbies'   => ['required', 'array', 'min:1'],
             'hobbies.*' => ['in:reading,sports,music,travel,coding'],
+            'image.required' => 'Upload Image.',
+            'image.mimes' => 'Image file type should be jpg, jpeg or png.',
+            'image.max' => 'Image should be smaller than 2048 kb.',
         ];
     }
 }

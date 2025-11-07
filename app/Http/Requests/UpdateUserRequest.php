@@ -52,6 +52,7 @@ class UpdateUserRequest extends FormRequest
             'products.*.name' => ['nullable', 'string'],
             'products.*.variant' => ['required_with:products.*.name', 'string'],
             'products.*.price' => ['nullable', 'required_with:products.*.name', 'numeric','decimal:0,2', 'min:0'],
+            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
         ];
     }
 
@@ -60,6 +61,8 @@ class UpdateUserRequest extends FormRequest
         return [
           'products.*.variant.required_with' => 'Select variant of the product.',
             'products.*.price.required_with' => 'Enter price for the selected variant',
+            'image.mimes' => 'Image file type should be jpg, jpeg or png.',
+            'image.max' => 'Image should be smaller than 2048 kb.',
         ];
     }
 }

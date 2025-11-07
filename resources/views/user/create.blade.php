@@ -6,7 +6,7 @@
     <div class="container form-section mt-5">
         <h2 class="mb-4">Create User</h2>
 
-        <form id="userForm" action="{{route('users.store')}}" method="POST" novalidate>
+        <form id="userForm" action="{{route('users.store')}}" method="POST" novalidate enctype="multipart/form-data">
             @csrf
 
             <div class="row g-3">
@@ -121,6 +121,15 @@
                 @error('gender')
                 <div class="text-danger">{{ $message }}</div>
                 @enderror
+            </div>
+
+            <div class="my-3">
+                <label for="image" class="form-label">Image</label>
+                <input type="file" id="image" name="image" class="form-control"  value="{{ old('image') }}">
+                @error('image')
+                <div class="text-danger">{{ $message }}</div>
+                @enderror
+
             </div>
 
 

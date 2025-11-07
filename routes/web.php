@@ -104,3 +104,9 @@ Route::post('/suggest-variants', [ProductController::class, 'suggestVariants'])-
 
 Route::resource('chat', ChatController::class);
 Route::post('/search-user', [UserController::class, 'searchUser'])->name('search-user');
+
+Route::post('/start-new-chat', [ChatController::class, 'startNewChat'])->name('start-new-chat');
+Route::post('/send-message', [ChatController::class, 'sendMessage'])->name('send-message');
+Route::post('/load-messages', [ChatController::class, 'loadMessages'])->name('load-messages');
+Route::post('/load-chat', [ChatController::class, 'loadChat'])->name('load-chat');
+Route::post('/send-user-message', [ChatController::class, 'sendUserMessage'])->name('send-user-message');

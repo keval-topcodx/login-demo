@@ -110,3 +110,5 @@ Route::post('/send-message', [ChatController::class, 'sendMessage'])->name('send
 Route::post('/load-messages', [ChatController::class, 'loadMessages'])->name('load-messages');
 Route::post('/load-chat', [ChatController::class, 'loadChat'])->name('load-chat');
 Route::post('/send-user-message', [ChatController::class, 'sendUserMessage'])->name('send-user-message');
+Route::post('/delete-message', [ChatController::class, 'deleteMessage'])->name('delete-message');
+Route::post('/edit-message', [ChatController::class, 'editMessage'])->name('edit-message');

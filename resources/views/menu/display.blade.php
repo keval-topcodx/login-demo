@@ -120,7 +120,8 @@
         </form>
     </div>
 
-</div>
+</div
+
 
 
     @vite(['resources/js/cart.js', 'resources/js/chat.js'])

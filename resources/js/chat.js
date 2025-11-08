@@ -20,9 +20,9 @@ $(document).ready(function() {
                     response.messages.forEach(function (message) {
                         const side = message['user_type'] === 'user' ? 'right' : 'left';
                         if(message['message']) {
-                            addCardMessage(message['message'], side);
+                            addCardMessage(message['message'], message['id'], side);
                         } else if (message['attachment_name'] && message['attachment_url']) {
-                            addCardAttachment(message['attachment_name'], message['attachment_url'] , side);
+                            addCardAttachment(message['attachment_name'], message['attachment_url'], message['id'] , side);
                         }
                     });
                 }
@@ -40,6 +40,157 @@ $(document).ready(function() {
     $('#closeNewChat').on('click', function() {
         $('#newChatCard').addClass('d-none');
     });
+
+
+    $(document).on("click", ".delete-chats", function (e) {
+        e.preventDefault();
+        let chatId = $(this).data('chat-id');
+        const chatDiv = $(this).closest(".user-with-chat-profile");
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log("result confirmed");
+                $.ajax({
+                    url: `/chat/${chatId}`,
+                    type: 'DELETE',
+                    data: {delete: ''},
+                    success: function (response) {
+                        if(response.success) {
+                            Swal.fire(
+                                'Deleted!',
+                                'Your message has been deleted.',
+                                'success'
+                            )
+                            chatDiv.remove();
+                        } else {
+                            Swal.fire(
+                                'ERROR!',
+                                'There was an error deleting message.',
+                                'error'
+                            )
+                        }
+                    }
+                });
+
+            }
+        });
+    });
+
+    $(document).on('click', '.delete-message', function (e) {
+        e.preventDefault();
+        let messageId = $(this).data('chat-message-id');
+        const messageDiv = $(this).closest('.chat-message');
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                   url: '/delete-message',
+                   type: 'POST',
+                   data: {id: messageId},
+                   success: function (response) {
+                       if(response.success) {
+                           Swal.fire(
+                               'Deleted!',
+                               'Your message has been deleted.',
+                               'success'
+                           )
+                           messageDiv.remove();
+                       } else {
+                           Swal.fire(
+                               'ERROR!',
+                               'There was an error deleting message.',
+                               'error'
+                           )
+                       }
+                   }
+                });
+
+            }
+        })
+    });
+
+    $(document).on('click', '.edit-message', function (e) {
+        e.preventDefault();
+        let messageId = $(this).data('chat-message-id');
+        let messageMenu = $(this).closest(".message-menu");
+        let container = $(this).closest(".chat-message");
+        messageMenu.addClass("d-none");
+        container.html(`
+            <div class="edit-message-container">
+                <input type="text" name="edited-message" class="form-control form-control-sm edit-message-input" rows="1" value="${container.data('message')}">
+                <div class="d-flex justify-content-end gap-2 mt-1">
+                    <button class="btn btn-sm btn-primary save-edit">Save</button>
+                    <button class="btn btn-sm btn-secondary cancel-edit">Cancel</button>
+                </div>
+            </div>
+        `);
+    });
+
+    $(document).on('click', '.save-edit', function () {
+        let container = $(this).closest('.chat-message');
+        let messageId = container.data('message-id');
+        let newMessage = container.find('.edit-message-input').val();
+
+
+        $.ajax({
+            url: `/edit-message`,
+            type: 'POST',
+            data: {
+                message: newMessage,
+                id: messageId,
+            },
+            success: function (response) {
+                if (response.success) {
+                    container.html(`
+                        <div class="message-bubble justify-content-end p-2 px-3 rounded-3 shadow-sm">
+                            ${response.message.message}
+                        </div>
+                        <div class="message-menu position-absolute me-2 d-none">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    &vellip;
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item edit-message" data-chat-message-id="${response.message.id}">Edit</a></li>
+                                    <li><a class="dropdown-item delete-message" data-chat-message-id="${response.message.id}">Delete</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                `);
+                    container.data('message', response.message);
+                } else {
+                    Swal.fire('Error!', 'Could not update message.', 'error');
+                }
+            },
+            error: function () {
+                Swal.fire('Error!', 'AJAX request failed.', 'error');
+            }
+        });
+    });
+
+    $(document).on('click', '.cancel-edit', function () {
+        let container = $(this).closest('.chat-message');
+        let oldMessage = container.data('message');
+        container.html(`<div class="message-text">${oldMessage}</div>`);
+    });
+
+
+
 
     $('#activeBtn').on('click', function() {
         $(this).removeClass('btn-outline-primary').addClass('btn-primary');
@@ -115,10 +266,12 @@ $(document).ready(function() {
                addChatTitle(userId, userImage, userFirstName, userLastName, userEmail);
                $('#chatMessages').empty();
                response.messages.forEach(function (message) {
+                   const side = message['user_type'] === 'user' ? 'left' : 'right';
+
                    if(message['message']) {
-                       addMessage(message['message']);
+                       addMessage(message['message'], message.id , side);
                    } else if (message['attachment_name'] && message['attachment_url']) {
-                       addAttachment(message['attachment_name'], message['attachment_url']);
+                       addAttachment(message['attachment_name'], message['attachment_url'], message.id , side);
                    }
                });
 
@@ -187,10 +340,10 @@ $(document).ready(function() {
                    if(response.success) {
                        response.chatData.forEach(function (chat) {
                            if(chat.message) {
-                               addCardMessage(chat.message, 'right');
+                               addCardMessage(chat.message, chat.id, 'right');
                            }
                            if(chat.attachment_name && chat.attachment_url) {
-                               addCardAttachment(chat.attachment_name, chat.attachment_url, 'right');
+                               addCardAttachment(chat.attachment_name, chat.attachment_url, chat.id, 'right');
                            }
                        });
                    }
@@ -204,8 +357,10 @@ $(document).ready(function() {
         e.preventDefault();
         let userId = $(this).parents("#chatWindow").data('user-id');
         let formData = new FormData(this);
+        let role = $(this).data('user');
+
         formData.append("userId", userId);
-        formData.append("sender", 'admin');
+        formData.append("sender", role);
 
         $.ajax({
             url: '/send-message',
@@ -218,11 +373,12 @@ $(document).ready(function() {
                 $(".chat-selected-info").remove();
                 if(response.success) {
                     response.chatData.forEach(function (chat) {
+                        console.log(chat.id);
                        if(chat.message) {
-                           addMessage(chat.message);
+                           addMessage(chat.message, chat.id);
                        }
                        if(chat.attachment_name && chat.attachment_url) {
-                           addAttachment(chat.attachment_name, chat.attachment_url);
+                           addAttachment(chat.attachment_name, chat.attachment_url, chat.id);
                        }
 
                     });
@@ -272,24 +428,47 @@ $(document).ready(function() {
         `);
     }
 
-    function addCardMessage(message, side = 'left') {
+    function addCardMessage(message, id, side = 'left') {
         let chat = $(".chat-messages");
         let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
         let bubbleClass = side === 'right' ? 'bg-primary text-light' : 'bg-light text-dark';
+        let html = '';
 
-        let html = `
-        <div class="d-flex mb-2 ${justifyClass}">
-            <div class="${bubbleClass} p-2 px-3 rounded-3 shadow-sm" style="max-width: 80%;">
-                ${message}
+        if(side === 'right') {
+            html = `
+            <div class="chat-message d-flex mb-2 ${justifyClass}" data-message="${message}" data-message-id="${id}">
+                <div class="message-bubble ${bubbleClass} p-2 px-3 rounded-3 shadow-sm" style="max-width: 80%;">
+                    ${message}
+                </div>
+                <div class="message-menu position-absolute me-2 d-none">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            &vellip;
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item edit-message" data-chat-message-id="${id}">Edit</a></li>
+                            <li><a class="dropdown-item delete-message" data-chat-message-id="${id}">Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-        </div>
-        `;
+            `;
+        } else {
+            html = `
+            <div class="chat-message d-flex mb-2 ${justifyClass}">
+                <div class="message-bubble ${bubbleClass} p-2 px-3 rounded-3 shadow-sm" style="max-width: 80%;">
+                    ${message}
+                </div>
+            </div>
+            `;
+        }
+
         chat.append(html);
 
         chat.scrollTop(chat[0].scrollHeight);
     }
 
-    function addCardAttachment(name, url, side = 'left') {
+    function addCardAttachment(name, url, id, side = 'left') {
         let chat = $('.chat-messages');
         let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
         let bubbleClass = side === 'right' ? 'bg-primary text-white' : 'bg-light text-dark';
@@ -315,32 +494,81 @@ $(document).ready(function() {
         `;
 
         }
-        const messageHtml = `
-            <div class="message-row d-flex ${justifyClass} mb-3">
+        let messageHtml = '';
+
+        if(side === "right") {
+            messageHtml = `
+            <div class="message-row d-flex ${justifyClass} mb-3 chat-message">
+                <div class="message-bubble ${bubbleClass} p-2">${attachmentHtml}</div>
+                <div class="message-menu position-absolute me-2 d-none">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                             aria-expanded="false">
+                            &vellip;
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item delete-message" data-chat-message-id="${id}">Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        } else {
+            messageHtml = `
+            <div class="message-row d-flex ${justifyClass} mb-3 chat-message">
                 <div class="message-bubble ${bubbleClass} p-2">${attachmentHtml}</div>
             </div>
         `;
+        }
+
 
         chat.append(messageHtml);
         chat.scrollTop(chat[0].scrollHeight);
     }
 
-    function addMessage(message, side = 'right') {
+
+    function addMessage(message, id, side = 'right') {
         let chat = $('#chatMessages');
         let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
         let bubbleClass = side === 'right' ? 'bg-primary text-white' : 'bg-light text-dark';
+        let messageHtml = '';
+        if(side === 'right') {
+            messageHtml = `
+            <div class="chat-message d-flex mb-2 ${justifyClass}" data-message="${message}" data-message-id="${id}">
+                <div class="messageBubble ${bubbleClass} p-2 px-3 rounded-3 shadow-sm">
+                    ${message}
+                </div>
+                <div class="message-menu position-absolute me-2 d-none">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                             aria-expanded="false">
+                            &vellip;
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item edit-message" data-chat-message-id="${id}">Edit</a></li>
+                            <li><a class="dropdown-item delete-message" data-chat-message-id="${id}">Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        } else {
+            messageHtml = `
+            <div class="chat-message d-flex mb-2 ${justifyClass}">
+                <div class="messageBubble ${bubbleClass} p-2 px-3 rounded-3 shadow-sm">
+                    ${message}
+                </div>
+            </div>
+        `;
+        }
 
-        let messageHtml = `
-        <div class="message-row d-flex ${justifyClass} mb-3">
-            <p class="message-bubble ${bubbleClass}">${message}</p>
-        </div>
-    `;
+
 
         chat.append(messageHtml);
         chat.scrollTop(chat[0].scrollHeight);
     }
 
-    function addAttachment(name, url, side = 'right') {
+    function addAttachment(name, url, id, side = 'right') {
         let chat = $('#chatMessages');
         let justifyClass = side === 'right' ? 'justify-content-end' : 'justify-content-start';
         let bubbleClass = side === 'right' ? 'bg-primary text-white' : 'bg-light text-dark';
@@ -350,7 +578,7 @@ $(document).ready(function() {
         let attachmentHtml = '';
 
         if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
-            attachmentHtml = `<img src="${url}" alt="${name}" class="img-fluid rounded shadow-sm" style="max-width: 200px;">`;
+            attachmentHtml = `<img src="${url}" alt="${name}" class="img-fluid rounded shadow-sm" style="max-width: 200px;"><figcaption>${name}</figcaption>`;
         } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
             attachmentHtml = `<video src="${url}" controls class="rounded shadow-sm" style="max-width: 250px;"></video>`;
         } else if (['mp3', 'wav'].includes(fileExtension)) {
@@ -363,11 +591,32 @@ $(document).ready(function() {
         `;
 
         }
-        const messageHtml = `
-            <div class="message-row d-flex ${justifyClass} mb-3">
+        let messageHtml = '';
+        if(side === 'right') {
+            messageHtml = `
+            <div class="message-row d-flex ${justifyClass} mb-3 chat-message">
+                <div class="message-bubble ${bubbleClass} p-2">${attachmentHtml}</div>
+                <div class="message-menu position-absolute me-2 d-none">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                             aria-expanded="false">
+                            &vellip;
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item delete-message" data-chat-message-id="${id}">Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        } else {
+            messageHtml = `
+            <div class="message-row d-flex ${justifyClass} mb-3 chat-message">
                 <div class="message-bubble ${bubbleClass} p-2">${attachmentHtml}</div>
             </div>
         `;
+        }
+
 
         chat.append(messageHtml);
         chat.scrollTop(chat[0].scrollHeight);

@@ -57,6 +57,16 @@
                                             <small class="text-muted text-truncate d-block">{{$user->chat->messages()->latest()->first()->message ?? $user->chat->messages()->latest()->first()->attachment_name}}</small>
                                         </div>
                                     </div>
+{{--                                    delete --}}
+                                    <div class="dropdown">
+                                        <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                            &vellip;
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item delete-chats" data-chat-id="{{$user->chat->id}}">Delete</a></li>
+                                        </ul>
+                                    </div>
                                 </li>
                             @endforeach
                         </ul>
@@ -84,7 +94,13 @@
                 </div>
 
                 <div class="border-top p-3">
-                    <form id="chatForm" class="d-flex gap-1">
+                    <form id="chatForm" class="d-flex gap-1"
+                          @if(auth()->user()->hasRole('admin'))
+                              data-user="admin"
+                          @elseif(auth()->user()->hasRole('agent'))
+                              data-user="agent"
+                          @endif
+                    >
 {{--                        <input type="text" name="message" class="form-control flex-grow-1" placeholder="Type a message..." autocomplete="off">--}}
 {{--                        <button type="submit" class="btn btn-primary">Send</button>--}}
                     </form>

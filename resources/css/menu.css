@@ -233,3 +233,115 @@
     color: white;
     border-top-right-radius: 0;
 }
+
+.chat-message {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Keep the bubble styling nice */
+.message-bubble {
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.message-bubble:hover {
+    background-color: #f8f9fa;
+}
+
+/* Hide 3 dots by default */
+.message-menu {
+    display: none;
+    right: -25px;
+}
+
+/* Show 3 dots on hover */
+.chat-message:hover .message-menu {
+    display: block !important;
+}
+
+/* Adjust spacing so dots are outside bubble */
+.justify-content-start .message-menu {
+    margin-right: 8px; /* left side (admin) */
+    order: -1;
+}
+
+.justify-content-end .message-menu {
+    margin-left: 8px; /* right side (user) */
+    order: 1;
+}
+
+/* Make button small and neat */
+.message-menu .btn {
+    padding: 0.25rem 0.4rem;
+    font-size: 1rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.message-menu .btn:hover {
+    background-color: #f1f1f1;
+}
+/* Prevent horizontal scroll in chat area */
+.chat-messages {
+    overflow-x: hidden !important;
+    word-wrap: break-word;
+    overflow-y: auto;
+}
+
+/* Ensure images fit inside the chat window */
+.chat-messages img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    display: block;
+}
+
+/* Optional: prevent horizontal overflow from long words or links */
+.chat-messages * {
+    word-break: break-word;
+    white-space: normal;
+}
+
+
+
+/*three dots after user select*/
+/* Ensure the list item can hold absolutely positioned children */
+.user-with-chat-profile {
+    position: relative;
+}
+.user-with-chat-profile .dropdown {
+    position: absolute;
+    right: 12px;
+    top: 25%;
+}
+/* Position the dropdown (three dots) to the right center */
+.user-with-chat-profile .dropdown-menu-button {
+    opacity: 0;
+}
+
+/* Show dropdown only on hover */
+.user-with-chat-profile:hover .dropdown-menu-button {
+    opacity: 1;
+}
+
+/* Style the three-dot button */
+.user-with-chat-profile .btn {
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    font-size: 20px;
+    padding: 0;
+}
+
+.user-with-chat-profile .btn:hover {
+    color: #000;
+}
+
+/* Ensure dropdown menu appears above others */
+.user-with-chat-profile .dropdown-menu {
+    z-index: 1050;
+}
+

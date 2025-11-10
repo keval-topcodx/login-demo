@@ -7,6 +7,7 @@ $.ajaxSetup({
 });
 
 $(document).ready(function() {
+    loadActiveChats();
     $("#chatBox").hide();
     $("#chatButton").on("click", function () {
         $("#chatBox").toggle();
@@ -41,6 +42,251 @@ $(document).ready(function() {
         $('#newChatCard').addClass('d-none');
     });
 
+    $("#activeBtn").on("click", function() {
+        $(this).removeClass('btn-outline-primary').addClass('btn-primary active');
+        $('#archiveBtn').removeClass('btn-primary active').addClass('btn-outline-primary');
+
+        $('#activeChats').show();
+        $('#archivedChats').hide();
+        loadActiveChats();
+    });
+    function loadActiveChats() {
+        $.ajax({
+            url: '/load-active-chats',
+            type: 'POST',
+            data: {active: ''},
+            success: function(response) {
+                $("#activeChats").html('');
+                if(response.success) {
+                    response.users.forEach(function (user) {
+                        $("#activeChats").append(getActiveChatHtml(user));
+                    });
+                }
+            }
+        })
+    }
+    function getActiveChatHtml(user) {
+        const imageUrl = user.media?.[0]?.original_url ?? '/images/no-image.png';
+        const latestMessage = user.chat?.messages?.[0]?.message
+            ?? user.chat?.messages?.[0]?.attachment_name
+            ?? '';
+
+        return `
+        <li class="list-group-item chat-item user-with-chat-profile"
+            data-user-id="${user.id}"
+            data-user-firstName="${user.first_name}"
+            data-user-lastName="${user.last_name}"
+            data-user-image="${imageUrl}"
+            data-user-email="${user.email}"
+        >
+            <div class="d-flex align-items-center gap-3 border-0 bg-transparent user-info hover-bg"
+                 style="min-height: 50px;">
+                <div class="flex-shrink-0" style="width: 50px; height: 50px;">
+                    <img src="${imageUrl}"
+                         alt="User Avatar"
+                         class="rounded-circle w-100 h-100"
+                         style="object-fit: cover; object-position: center; border: 2px solid #f1f1f1;">
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <h6 class="mb-0 fw-semibold text-truncate">${user.first_name + " " + user.last_name}</h6>
+                    <small class="text-muted text-truncate d-block">
+                    ${latestMessage}
+                    </small>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    &vellip;
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item delete-chats" data-chat-id="${user.chat.id}">Delete</a></li>
+                    <li><a class="dropdown-item archive-chat" data-chat-id="${user.chat.id}">Archive Chat</a> </li>
+                </ul>
+            </div>
+        </li>
+        `;
+    }
+
+    $("#chatSearch").on("input", function () {
+       let searchValue = $(this).val();
+       let searchFrom;
+        if ($('#activeBtn').hasClass('active')) {
+            searchFrom = 'active';
+        } else if ($('#archiveBtn').hasClass('active')) {
+            searchFrom = 'archived';
+        }
+
+        $.ajax({
+            url: '/chat-search',
+            type: 'POST',
+            data: {value: searchValue, from: searchFrom},
+            success: function (response) {
+                if(response.success) {
+                    if(searchFrom === 'active') {
+                        $("#activeChats").html('');
+                        response.users.forEach(function (user) {
+                            $("#activeChats").append(getActiveChatHtml(user));
+                        })
+                    } else if (searchFrom === 'archived') {
+                        $("#archivedChats").html('');
+                        response.users.forEach(function (user) {
+                            $("#archivedChats").append(getArchiveChatHtml(user));                        })
+                    }
+                }
+
+            }
+        });
+    });
+
+    $("#archiveBtn").on("click", function() {
+        $(this).removeClass('btn-outline-primary').addClass('btn-primary active');
+        $('#activeBtn').removeClass('btn-primary active').addClass('btn-outline-primary');
+
+        $('#activeChats').hide();
+        $('#archivedChats').show();
+        loadArchiveChats();
+    });
+
+    function loadArchiveChats() {
+        $.ajax({
+            url: '/load-archived-chats',
+            type: 'POST',
+            data: {archive: ''},
+            success: function (response) {
+                $("#archivedChats").html('');
+                if(response.success) {
+                    response.users.forEach(function (user) {
+                        $("#archivedChats").append(getArchiveChatHtml(user));
+                    });
+                }
+            }
+        });
+    }
+    function getArchiveChatHtml(user) {
+        const imageUrl = user.media?.[0]?.original_url ?? '/images/no-image.png';
+        const latestMessage = user.chat?.messages?.[0]?.message
+            ?? user.chat?.messages?.[0]?.attachment_name
+            ?? '';
+
+        return `
+        <li class="list-group-item chat-item user-with-chat-profile"
+            data-user-id="${user.id}"
+            data-user-firstName="${user.first_name}"
+            data-user-lastName="${user.last_name}"
+            data-user-image="${imageUrl}"
+            data-user-email="${user.email}"
+        >
+            <div class="d-flex align-items-center gap-3 border-0 bg-transparent user-info hover-bg"
+                 style="min-height: 50px;">
+                <div class="flex-shrink-0" style="width: 50px; height: 50px;">
+                    <img src="${imageUrl}"
+                         alt="User Avatar"
+                         class="rounded-circle w-100 h-100"
+                         style="object-fit: cover; object-position: center; border: 2px solid #f1f1f1;">
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <h6 class="mb-0 fw-semibold text-truncate">${user.first_name} ${user.last_name}</h6>
+                    <small class="text-muted text-truncate d-block">${latestMessage}</small>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    &vellip;
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item delete-chats" data-chat-id="${user.chat.id}">Delete</a></li>
+                    <li><a class="dropdown-item unarchive-chat" data-chat-id="${user.chat.id}">Unarchive Chat</a></li>
+                </ul>
+            </div>
+        </li>
+    `;
+    }
+
+
+    $(document).on("click", ".unarchive-chat", function (e) {
+        e.preventDefault();
+        let chatId = $(this).data('chat-id');
+        const chatDiv = $(this).closest(".user-with-chat-profile");
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Unarchive chat with customer?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log("result confirmed");
+                $.ajax({
+                    url: `/unarchive-chat`,
+                    type: 'POST',
+                    data: {id: chatId},
+                    success: function (response) {
+                        if(response.success) {
+                            Swal.fire(
+                                'Unarchived!',
+                                'Chat with customer has been unarchived.',
+                                'success'
+                            )
+                            chatDiv.remove();
+                        } else {
+                            Swal.fire(
+                                'ERROR!',
+                                'There was an error unarchiving chat.',
+                                'error'
+                            )
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    $(document).on("click", ".archive-chat", function (e) {
+        e.preventDefault();
+        let chatId = $(this).data('chat-id');
+        const chatDiv = $(this).closest(".user-with-chat-profile");
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Archive chat with customer?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log("result confirmed");
+                $.ajax({
+                    url: `/archive-chat`,
+                    type: 'POST',
+                    data: {id: chatId},
+                    success: function (response) {
+                        if(response.success) {
+                            Swal.fire(
+                                'Archived!',
+                                'Chat with customer has been archived.',
+                                'success'
+                            )
+                            chatDiv.remove();
+                        } else {
+                            Swal.fire(
+                                'ERROR!',
+                                'There was an error archiving chat.',
+                                'error'
+                            )
+                        }
+                    }
+                });
+
+            }
+        });
+    });
 
     $(document).on("click", ".delete-chats", function (e) {
         e.preventDefault();
@@ -132,7 +378,7 @@ $(document).ready(function() {
         messageMenu.addClass("d-none");
         container.html(`
             <div class="edit-message-container">
-                <input type="text" name="edited-message" class="form-control form-control-sm edit-message-input" rows="1" value="${container.data('message')}">
+                <input type="text" name="edited-message" class="form-control form-control-md edit-message-input" value="${container.data('message')}">
                 <div class="d-flex justify-content-end gap-2 mt-1">
                     <button class="btn btn-sm btn-primary save-edit">Save</button>
                     <button class="btn btn-sm btn-secondary cancel-edit">Cancel</button>
@@ -145,7 +391,6 @@ $(document).ready(function() {
         let container = $(this).closest('.chat-message');
         let messageId = container.data('message-id');
         let newMessage = container.find('.edit-message-input').val();
-
 
         $.ajax({
             url: `/edit-message`,
@@ -185,31 +430,32 @@ $(document).ready(function() {
 
     $(document).on('click', '.cancel-edit', function () {
         let container = $(this).closest('.chat-message');
+        let id = container.data('message-id');
         let oldMessage = container.data('message');
-        container.html(`<div class="message-text">${oldMessage}</div>`);
+        container.html(`
+            <div class="messageBubble bg-primary text-white p-2 px-3 rounded-3 shadow-sm">
+                ${oldMessage}
+            </div>
+            <div class="message-menu position-absolute me-2 d-none">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
+                         aria-expanded="false">
+                        &vellip;
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item edit-message" data-chat-message-id="${id}">Edit</a></li>
+                        <li><a class="dropdown-item delete-message" data-chat-message-id="${id}">Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+        `);
     });
 
 
-
-
-    $('#activeBtn').on('click', function() {
-        $(this).removeClass('btn-outline-primary').addClass('btn-primary');
-        $('#archiveBtn').removeClass('btn-primary').addClass('btn-outline-primary');
-
-        $('#activeChats').show();
-        $('#archivedChats').hide();
-    });
-
-    $('#archiveBtn').on('click', function() {
-        $(this).removeClass('btn-outline-primary').addClass('btn-primary');
-        $('#activeBtn').removeClass('btn-primary').addClass('btn-outline-primary');
-
-        $('#activeChats').hide();
-        $('#archivedChats').show();
-    });
 
     $('#activeChats').show();
     $('#archivedChats').hide();
+
 
     $(document).on("input", "#searchUser", function() {
         let searchValue = $(this).val().trim();
@@ -225,7 +471,7 @@ $(document).ready(function() {
 
                         let imageUrl = (user.media && user.media.length > 0)
                             ? user.media[0].original_url
-                            : "/images/default-avatar.png";
+                            : "/images/no-image.png";
 
                         $(".new-chat-list").append(`
                             <li class="list-group-item chat-item d-flex align-items-center gap-3 py-2 border-0 border-bottom bg-transparent user-chat-list hover-bg"
@@ -257,6 +503,7 @@ $(document).ready(function() {
         let userLastName = $(this).data('user-lastname');
         let userImage = $(this).data('user-image');
         let userEmail = $(this).data('user-email');
+        let userRole = $(this).parents("#chatPage").data('user');
 
         $.ajax({
            url: '/load-messages',
@@ -266,7 +513,7 @@ $(document).ready(function() {
                addChatTitle(userId, userImage, userFirstName, userLastName, userEmail);
                $('#chatMessages').empty();
                response.messages.forEach(function (message) {
-                   const side = message['user_type'] === 'user' ? 'left' : 'right';
+                   const side = message['user_type'] === userRole ? 'right' : 'left';
 
                    if(message['message']) {
                        addMessage(message['message'], message.id , side);
@@ -294,7 +541,7 @@ $(document).ready(function() {
 
                     let imageUrl = (user.media && user.media.length > 0)
                         ? user.media[0].original_url
-                        : "/images/default-avatar.png";
+                        : "/images/no-image.png";
 
 
                     $("#newChatCard").addClass('d-none');
@@ -372,6 +619,8 @@ $(document).ready(function() {
                 $("#chatForm")[0].reset();
                 $(".chat-selected-info").remove();
                 if(response.success) {
+                    loadActiveChats();
+                    loadArchiveChats();
                     response.chatData.forEach(function (chat) {
                         console.log(chat.id);
                        if(chat.message) {
@@ -380,7 +629,6 @@ $(document).ready(function() {
                        if(chat.attachment_name && chat.attachment_url) {
                            addAttachment(chat.attachment_name, chat.attachment_url, chat.id);
                        }
-
                     });
                 } else {
                     console.log(response.message);

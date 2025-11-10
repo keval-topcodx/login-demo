@@ -6,7 +6,6 @@ use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Mail\SendVerificationMail;
 use App\Models\ProductVariant;
-use App\Models\UserProducts;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -166,9 +165,12 @@ class UserController extends Controller
     {
         $search = $request->input("search");
 
-        $users = User::with('media')->doesntHave('chat')
+        $users = User::with('media')
+            ->doesntHave('chat')
+            ->where('id', '!=', auth()->id())
             ->whereRaw("CONCAT(first_name, last_name) LIKE ?", ["%{$search}%"])
             ->get();
+
 
         if ($users->isNotEmpty()) {
             return response()->json([
@@ -181,7 +183,5 @@ class UserController extends Controller
                 'message' => 'No users found.'
             ]);
         }
-
-
     }
 }

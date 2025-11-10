@@ -13,7 +13,12 @@
             {{ session('danger') }}
         </div>
     @endif
-    <div class="container-fluid vh-90">
+
+    <div class="container-fluid vh-90"
+         id="chatPage"
+         data-user="{{ auth()->user()->hasRole('admin') ? 'admin' : (auth()->user()->hasRole('agent') ? 'agent' : '') }}"
+         data-user-id="{{ auth()->user()->id }}"
+    >
         <div class="row h-90">
             <div class="col-3 border-end d-flex flex-column p-0 bg-light" style="height: 90vh">
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
@@ -30,46 +35,13 @@
 
                 <div class="flex-grow-1 d-flex flex-column">
                     <div class="chat-type-buttons w-100 d-flex mb-2">
-                        <button id="activeBtn" class="btn btn-primary w-50 rounded-0">Active Chats</button>
+                        <button id="activeBtn" class="btn btn-primary w-50 rounded-0 active">Active Chats</button>
                         <button id="archiveBtn" class="btn btn-outline-primary w-50 rounded-0">Archived Chats</button>
                     </div>
 
-                    <div class="flex-grow-1 overflow-auto border-bottom" style="min-height: 50%;">
-                        <ul class="list-group list-group-flush" id="activeChats">
-                            @foreach($usersWithChat as $user)
-                                <li class="list-group-item chat-item user-with-chat-profile"
-                                    data-user-id="{{$user->id}}"
-                                    data-user-firstName="{{$user->first_name}}"
-                                    data-user-lastName="{{$user->last_name}}"
-                                    data-user-image="{{$user->image_url}}"
-                                    data-user-email="{{$user->email}}"
-                                >
-                                    <div class="d-flex align-items-center gap-3 border-0 bg-transparent user-info hover-bg"
-                                         style="min-height: 50px;">
-                                        <div class="flex-shrink-0" style="width: 50px; height: 50px;">
-                                            <img src="{{$user->image_url}}"
-                                                 alt="User Avatar"
-                                                 class="rounded-circle w-100 h-100"
-                                                 style="object-fit: cover; object-position: center; border: 2px solid #f1f1f1;">
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h6 class="mb-0 fw-semibold text-truncate">{{$user->first_name . " " . $user->last_name}}</h6>
-                                            <small class="text-muted text-truncate d-block">{{$user->chat->messages()->latest()->first()->message ?? $user->chat->messages()->latest()->first()->attachment_name}}</small>
-                                        </div>
-                                    </div>
-{{--                                    delete --}}
-                                    <div class="dropdown">
-                                        <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                            &vellip;
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item delete-chats" data-chat-id="{{$user->chat->id}}">Delete</a></li>
-                                        </ul>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
+                    <div class="flex-grow-1 overflow-auto" style="min-height: 50%;">
+                        <ul class="list-group list-group-flush" id="activeChats"></ul>
+                        <ul class="list-group list-group-flush" id="archivedChats"></ul>
                     </div>
                 </div>
             </div>
@@ -83,14 +55,7 @@
                     <div class="d-flex align-items-center justify-content-center h-100 chat-selected-info">
                         <p class="chats-info">No chat selected...</p>
                     </div>
-                    <!-- Example messages -->
-{{--                    <div class="message-row d-flex justify-content-start mb-3">--}}
-{{--                        <p class="message-bubble bg-light text-dark">Hey there! 👋</p>--}}
-{{--                    </div>--}}
 
-{{--                    <div class="message-row d-flex justify-content-end mb-3">--}}
-{{--                        <p class="message-bubble bg-primary text-white">Hello! How are you?</p>--}}
-{{--                    </div>--}}
                 </div>
 
                 <div class="border-top p-3">
@@ -101,8 +66,6 @@
                               data-user="agent"
                           @endif
                     >
-{{--                        <input type="text" name="message" class="form-control flex-grow-1" placeholder="Type a message..." autocomplete="off">--}}
-{{--                        <button type="submit" class="btn btn-primary">Send</button>--}}
                     </form>
                 </div>
             </div>

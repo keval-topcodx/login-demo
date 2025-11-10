@@ -112,3 +112,8 @@ Route::post('/load-chat', [ChatController::class, 'loadChat'])->name('load-chat'
 Route::post('/send-user-message', [ChatController::class, 'sendUserMessage'])->name('send-user-message');
 Route::post('/delete-message', [ChatController::class, 'deleteMessage'])->name('delete-message');
 Route::post('/edit-message', [ChatController::class, 'editMessage'])->name('edit-message');
+Route::post('/archive-chat', [ChatController::class, 'archiveChat'])->name('archive-chat');
+Route::post('/unarchive-chat', [ChatController::class, 'unArchiveChat'])->name('unarchive-chat');
+Route::post('/load-archived-chats', [ChatController::class, 'loadArchivedChats'])->name('load-archived-chats');
+Route::post('/load-active-chats', [ChatController::class, 'loadActiveChats'])->name('load-active-chats');
+Route::post('/chat-search', [ChatController::class, 'chatSearch'])->name('chat-search');

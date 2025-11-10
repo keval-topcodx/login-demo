@@ -17,22 +17,46 @@ class ChatController extends Controller
     public function index()
     {
         $users = User::all();
-//        $usersWithChat = User::has('chat')->with('chat')->get();
 
-        $usersWithoutChat = User::doesntHave('chat')->get();
+        $usersWithoutChat = User::doesntHave('chat')
+            ->where('id', '!=', auth()->id())
+            ->get();
 
-        $usersWithChat = User::whereHas('chat.messages')
-            ->with('chat.messages')
+        $usersWithArchivedChat = User::where('id', '!=', auth()->id())
+            ->whereHas('chat', function ($query) {
+                $query->where('archived', 1);
+            })
+            ->whereHas('chat.messages')
+            ->with(['chat.messages' => function ($query) {
+                $query->orderByDesc('updated_at');
+            }])
             ->orderByDesc(
                 ChatMessages::select('chat_messages.updated_at')
-                ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
+                    ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
                     ->whereColumn('chats.user_id', 'users.id')
                     ->orderByDesc('chat_messages.updated_at')
                     ->limit(1)
             )
             ->get();
 
-        return view('support.chat', ['users' => $users, 'usersWithChat' => $usersWithChat, 'usersWithoutChat' => $usersWithoutChat]);
+        $usersWithActiveChat = User::where('id', '!=', auth()->id())
+            ->whereHas('chat', function ($query) {
+                $query->where('archived', 0);
+            })
+            ->whereHas('chat.messages')
+            ->with(['chat.messages' => function ($query) {
+                $query->orderByDesc('updated_at');
+            }])
+            ->orderByDesc(
+                ChatMessages::select('chat_messages.updated_at')
+                    ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
+                    ->whereColumn('chats.user_id', 'users.id')
+                    ->orderByDesc('chat_messages.updated_at')
+                    ->limit(1)
+            )
+            ->get();
+
+        return view('support.chat', ['users' => $users, 'usersWithArchivedChat' => $usersWithArchivedChat, 'usersWithActiveChats' => $usersWithActiveChat ,  'usersWithoutChat' => $usersWithoutChat]);
     }
 
     /**
@@ -235,6 +259,160 @@ class ChatController extends Controller
         return response()->json([
             'success' => true,
             'message' => $message,
+        ]);
+    }
+
+    public function archiveChat(Request $request)
+    {
+        $id = $request->input('id');
+
+        $chat = Chat::find($id);
+
+        if($chat) {
+            $chat->update([
+               'archived' => 1
+            ]);
+            return response()->json([
+                'success' => true
+            ]);
+        } else {
+            return response()->json([
+               'success' => false
+            ]);
+        }
+    }
+
+    public function unArchiveChat(Request $request)
+    {
+        $id = $request->input('id');
+
+        $chat = Chat::find($id);
+
+        if($chat) {
+            $chat->update([
+                'archived' => 0
+            ]);
+            return response()->json([
+                'success' => true
+            ]);
+        } else {
+            return response()->json([
+                'success' => false
+            ]);
+        }
+    }
+
+    public function loadArchivedChats(Request $request)
+    {
+        $usersWithArchivedChat = User::whereHas('chat', function ($query) {
+                $query->where('archived', 1);
+            })
+            ->whereHas('chat.messages')
+            ->with(['chat.messages' => function ($query) {
+                $query->orderByDesc('updated_at');
+            }, 'media'])
+            ->orderByDesc(
+                ChatMessages::select('chat_messages.updated_at')
+                    ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
+                    ->whereColumn('chats.user_id', 'users.id')
+                    ->orderByDesc('chat_messages.updated_at')
+                    ->limit(1)
+            )
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'users' => $usersWithArchivedChat
+        ]);
+    }
+
+    public function loadActiveChats(Request $request)
+    {
+        $usersWithActiveChat = User::where('id', '!=', auth()->id())
+            ->whereHas('chat', function ($query) {
+                $query->where('archived', 0);
+            })
+            ->whereHas('chat.messages')
+            ->with(['chat.messages' => function ($query) {
+                $query->orderByDesc('updated_at');
+            }, 'media'])
+            ->orderByDesc(
+                ChatMessages::select('chat_messages.updated_at')
+                    ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
+                    ->whereColumn('chats.user_id', 'users.id')
+                    ->orderByDesc('chat_messages.updated_at')
+                    ->limit(1)
+            )
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'users' => $usersWithActiveChat
+        ]);
+    }
+
+    public function chatSearch(Request $request) {
+        $validated = $request->validate([
+            'value' => ['nullable', 'string'],
+            'from' => ['required', 'in:active,archived'],
+        ]);
+
+        if($validated) {
+            $value = $validated['value'];
+            $from = $validated['from'];
+
+            if($from == 'active') {
+                $users = User::whereRaw("CONCAT(first_name, last_name) LIKE ?", ["%{$value}%"])
+                    ->whereHas('chat', function ($query) {
+                        $query->where('archived', 0);
+                    })
+                    ->whereHas('chat.messages')
+                    ->with(['chat.messages' => function ($query) {
+                        $query->orderByDesc('updated_at');
+                    }, 'media'])
+                    ->orderByDesc(
+                        ChatMessages::select('chat_messages.updated_at')
+                            ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
+                            ->whereColumn('chats.user_id', 'users.id')
+                            ->orderByDesc('chat_messages.updated_at')
+                            ->limit(1)
+                    )
+                    ->get();
+
+                return response()->json([
+                    'success' => true,
+                    'users' => $users
+                ]);
+            } elseif ($from == 'archived') {
+                $users = User::whereRaw("CONCAT(first_name, last_name) LIKE ?", ["%{$value}%"])
+                    ->whereHas('chat', function ($query) {
+                        $query->where('archived', 1);
+                    })
+                    ->whereHas('chat.messages')
+                    ->with(['chat.messages' => function ($query) {
+                        $query->orderByDesc('updated_at');
+                    }, 'media'])
+                    ->orderByDesc(
+                        ChatMessages::select('chat_messages.updated_at')
+                            ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
+                            ->whereColumn('chats.user_id', 'users.id')
+                            ->orderByDesc('chat_messages.updated_at')
+                            ->limit(1)
+                    )
+                    ->get();
+                return response()->json([
+                    'success' => true,
+                    'users' => $users
+                ]);
+            }
+
+            return response()->json([
+                'success' => false
+            ]);
+        }
+
+        return response()->json([
+           'success' => false
         ]);
     }
 

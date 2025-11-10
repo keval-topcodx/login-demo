@@ -7,6 +7,20 @@ $.ajaxSetup({
 });
 
 $(document).ready(function() {
+    let userId = $("#chatBox").data('user-id') ?? $("#chatWindow").find(".user-info").data('user-id') ?? null;
+
+    Echo.private('user.' + userId)
+        .listen('.message.sent', (e) => {
+            e.message.forEach(msg => {
+                if(msg.user_type == 'admin') {
+                    addCardMessage(msg.message, msg.id, 'left');
+                } else if (msg.user_type == 'user') {
+                    addMessage(msg.message, msg.id, 'left');
+                }
+            });
+        });
+
+
     loadActiveChats();
     $("#chatBox").hide();
     $("#chatButton").on("click", function () {
@@ -504,12 +518,15 @@ $(document).ready(function() {
         let userImage = $(this).data('user-image');
         let userEmail = $(this).data('user-email');
         let userRole = $(this).parents("#chatPage").data('user');
+        let chatWindow = $("#chatWindow");
 
         $.ajax({
            url: '/load-messages',
            type: 'POST',
            data: {id: userId, action: 'forSupport'},
            success: function (response) {
+
+               chatWindow.data('user-id', userId);
                addChatTitle(userId, userImage, userFirstName, userLastName, userEmail);
                $('#chatMessages').empty();
                response.messages.forEach(function (message) {
@@ -622,7 +639,6 @@ $(document).ready(function() {
                     loadActiveChats();
                     loadArchiveChats();
                     response.chatData.forEach(function (chat) {
-                        console.log(chat.id);
                        if(chat.message) {
                            addMessage(chat.message, chat.id);
                        }

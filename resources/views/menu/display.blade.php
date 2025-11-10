@@ -93,7 +93,7 @@
     💬
 </button>
 
-<div id="chatBox" class="card shadow-lg border-0 position-fixed chat-box"
+<div id="chatBox" class="card shadow-lg border-0 position-fixed chat-box" data-user-id="{{auth()->user()->id}}"
      style="border-radius: 1rem; z-index: 1050;">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
         <span><i class="bi bi-chat-dots-fill me-1"></i> Customer Support</span>

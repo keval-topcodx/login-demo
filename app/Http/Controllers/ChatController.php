@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Chat;
 use App\Models\ChatMessages;
 use App\Models\User;
@@ -189,7 +190,7 @@ class ChatController extends Controller
                     ]);
                 }
             }
-
+            MessageSent::dispatch($chatMessage, $chat->user_id);
             return response()->json([
                 'success' => true,
                 'chatData' => $chatMessage

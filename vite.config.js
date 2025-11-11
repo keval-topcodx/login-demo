@@ -16,6 +16,7 @@ export default defineConfig({
             'resources/js/order.js',
             'resources/js/user.js',
             'resources/js/chat.js',
+            'resources/js/notification.js',
             ],
             refresh: true,
         }),

@@ -89,38 +89,45 @@
     </div>
 </div>
 
-<button id="chatButton" class="btn btn-primary chat-btn">
-    💬
-</button>
+@hasanyrole('admin|agent')
+@else
+    <button id="chatButton" class="btn btn-primary chat-btn">
+        💬
+    </button>
 
-<div id="chatBox" class="card shadow-lg border-0 position-fixed chat-box" data-user-id="{{auth()->user()->id}}"
-     style="border-radius: 1rem; z-index: 1050;">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
-        <span><i class="bi bi-chat-dots-fill me-1"></i> Customer Support</span>
-        <button id="closeChat" class="btn btn-sm btn-light text-primary rounded-circle p-1"><i class="bi bi-x-lg small"></i></button>
-    </div>
+    <div id="chatBox" class="card shadow-lg border-0 position-fixed chat-box" data-user-id="{{auth()->user()->id}}"
+         style="border-radius: 1rem; z-index: 1050;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+            <span><i class="bi bi-chat-dots-fill me-1"></i> Customer Support</span>
+            <button id="closeChat" class="btn btn-sm btn-light text-primary rounded-circle p-1"><i class="bi bi-x-lg small"></i></button>
+        </div>
 
-    <div class="card-body d-flex flex-column chat-messages" style="height: 250px; overflow-y: auto; background-color: #f8f9fa;">
-        <div class="text-center text-muted small mb-3">How can we help you?</div>
-    </div>
+        <div class="card-body d-flex flex-column chat-messages" style="height: 250px; overflow-y: auto; background-color: #f8f9fa;">
+            <div class="text-center text-muted small mb-3">How can we help you?</div>
+        </div>
 
-    <div class="card-footer bg-white border-0 d-flex align-items-center p-2">
-        <form id="userChatForm" class="d-flex align-items-center w-100">
-            <input type="text" name="message" class="form-control form-control-sm me-2 rounded-pill flex-grow-1" placeholder="Type a message...">
+        <div class="card-footer bg-white border-0 d-flex align-items-center p-2">
+            <form id="userChatForm" class="d-flex align-items-center w-100">
+                <input type="text" name="message" class="form-control form-control-sm me-2 rounded-pill flex-grow-1" placeholder="Type a message...">
 
-            <input type="file" id="chatAttachment" name="attachments[]" class="d-none" multiple>
+                <input type="file" id="chatAttachment" name="attachments[]" class="d-none" multiple>
 
-            <button type="button" id="attachBtn" class="btn btn-light btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
-                <span style="font-size:18px;">&#128206;</span>
-            </button>
+                <button type="button" id="attachBtn" class="btn btn-light btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
+                    <span style="font-size:18px;">&#128206;</span>
+                </button>
 
-            <button type="submit" class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
-                <span style="font-size:18px;">&#10148;</span>
-            </button>
-        </form>
-    </div>
+                <button type="submit" class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
+                    <span style="font-size:18px;">&#10148;</span>
+                </button>
+            </form>
+        </div>
 
-</div
+    </div
+
+@endhasanyrole
+
+
+
 
 
 

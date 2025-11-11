@@ -9,6 +9,8 @@ use App\Models\User;
 use http\Env\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class ChatController extends Controller
 {
@@ -171,10 +173,25 @@ class ChatController extends Controller
 //        repeat
             $chatMessage = [];
             if ($message) {
-                $chatMessage[] = $chat->messages()->create([
-                    'user_type' => $sender,
-                    'message' => $message
-                ]);
+                if ($sender == 'user') {
+                    $chatMessage[] = $chat->messages()->create([
+                        'user_type' => $sender,
+                        'message' => $message,
+                        'unread' => true
+                    ]);
+
+                    $user->notifications()->create([
+                       'message' => $message
+                    ]);
+
+                } else {
+                    $chatMessage[] = $chat->messages()->create([
+                        'user_type' => $sender,
+                        'message' => $message,
+                        'unread' => false,
+                    ]);
+                }
+
             }
 
             if ($request->hasFile('attachments')) {
@@ -183,14 +200,32 @@ class ChatController extends Controller
                     $url = asset('storage/' . $path);
                     $name = $file->getClientOriginalName();
 
-                    $chatMessage[] = $chat->messages()->create([
-                        'user_type' => $sender,
-                        'attachment_name' => $name,
-                        'attachment_url' => $url,
-                    ]);
+                    if($sender == 'user') {
+                        $chatMessage[] = $chat->messages()->create([
+                            'user_type' => $sender,
+                            'attachment_name' => $name,
+                            'attachment_url' => $url,
+                            'unread' => true,
+                        ]);
+
+                        $user->notifications()->create([
+                            'message' => 'Attachment: ' . $name . "Url: " . $url,
+                        ]);
+                    } else {
+                        $chatMessage[] = $chat->messages()->create([
+                            'user_type' => $sender,
+                            'attachment_name' => $name,
+                            'attachment_url' => $url,
+                            'unread' => false
+                        ]);
+                    }
                 }
             }
-            MessageSent::dispatch($chatMessage, $chat->user_id);
+            if($sender == 'admin' || $sender == 'agent') {
+                MessageSent::dispatch($chatMessage, $chat->user_id, $sender);
+            } else if($sender == 'user') {
+                MessageSent::dispatch($chatMessage, $chat->user_id, $sender);
+            }
             return response()->json([
                 'success' => true,
                 'chatData' => $chatMessage
@@ -208,6 +243,12 @@ class ChatController extends Controller
         $action = $request->input('action');
         if($action == 'forSupport') {
             $userId = $request->input('id');
+            $user = User::find($userId);
+            if($user) {
+                $user->chat->messages()
+                    ->where('unread', true)
+                    ->update(['unread' => false]);
+            }
         } else if($action == 'forUser') {
             $userId = auth()->user()->id;
         }
@@ -312,6 +353,14 @@ class ChatController extends Controller
             ->with(['chat.messages' => function ($query) {
                 $query->orderByDesc('updated_at');
             }, 'media'])
+            ->select('users.*')
+            ->selectSub(function ($query) {
+                $query->selectRaw('COUNT(*)')
+                    ->from('chat_messages')
+                    ->join('chats', 'chats.id', '=', 'chat_messages.chat_id')
+                    ->where('chat_messages.unread', true)
+                    ->whereColumn('chats.user_id', 'users.id');
+            }, 'unread_count')
             ->orderByDesc(
                 ChatMessages::select('chat_messages.updated_at')
                     ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
@@ -329,14 +378,26 @@ class ChatController extends Controller
 
     public function loadActiveChats(Request $request)
     {
-        $usersWithActiveChat = User::where('id', '!=', auth()->id())
+        $usersWithActiveChat = User::query()
+            ->where('id', '!=', auth()->id())
             ->whereHas('chat', function ($query) {
                 $query->where('archived', 0);
             })
             ->whereHas('chat.messages')
-            ->with(['chat.messages' => function ($query) {
-                $query->orderByDesc('updated_at');
-            }, 'media'])
+            ->with([
+                'chat.messages' => function ($query) {
+                    $query->orderByDesc('updated_at');
+                },
+                'media'
+            ])
+            ->select('users.*')
+            ->selectSub(function ($query) {
+                $query->selectRaw('COUNT(*)')
+                    ->from('chat_messages')
+                    ->join('chats', 'chats.id', '=', 'chat_messages.chat_id')
+                    ->where('chat_messages.unread', true)
+                    ->whereColumn('chats.user_id', 'users.id');
+            }, 'unread_count')
             ->orderByDesc(
                 ChatMessages::select('chat_messages.updated_at')
                     ->join('chats', 'chat_messages.chat_id', '=', 'chats.id')
@@ -415,6 +476,27 @@ class ChatController extends Controller
         return response()->json([
            'success' => false
         ]);
+    }
+
+    public function markAsRead(Request $request)
+    {
+        $userId = $request->input('user');
+        if($userId) {
+            $user = User::find($userId);
+
+            $user->chat->messages()
+                ->where('unread', true)
+                ->update(['unread' => false]);
+
+            return response()->json([
+                'success' => true
+            ]);
+        } else {
+            return response()->json([
+                'success' => false
+            ]);
+        }
+
     }
 
 }

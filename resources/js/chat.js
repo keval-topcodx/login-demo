@@ -7,19 +7,61 @@ $.ajaxSetup({
 });
 
 $(document).ready(function() {
-    let userId = $("#chatBox").data('user-id') ?? $("#chatWindow").find(".user-info").data('user-id') ?? null;
+    let userId = $("#chatBox").data('user-id');
 
-    Echo.private('user.' + userId)
-        .listen('.message.sent', (e) => {
-            e.message.forEach(msg => {
-                if(msg.user_type == 'admin') {
-                    addCardMessage(msg.message, msg.id, 'left');
-                } else if (msg.user_type == 'user') {
-                    addMessage(msg.message, msg.id, 'left');
-                }
+    if(userId) {
+        Echo.private('user.' + userId)
+            .listen('.message.sent', (e) => {
+                e.message.forEach(msg => {
+                    if(msg.user_type == 'admin' || msg.user_type == 'agent') {
+                        if(msg.message) {
+                            addCardMessage(msg.message, msg.id, 'left');
+                        }
+                        if(msg.attachment_name && msg.attachment_url) {
+                            addCardAttachment(msg.attachment_name, msg.attachment_url, msg.id, 'left');
+                        }
+                    }
+                });
             });
-        });
+    }
+    let supportId = $("#chatPage").data('user-id');
 
+    if (supportId) {
+        Echo.private(`support`)
+            .listen('.message.sent', (e) => {
+                let chatWindowUser = $("#chatWindow").data('user-id');
+                if(chatWindowUser == e.userId) {
+                    e.message.forEach(msg => {
+                        if(msg.message) {
+                            addMessage(msg.message, msg.id, 'left');
+                        }
+                        if(msg.attachment_name && msg.attachment_url) {
+                            addAttachment(msg.attachment_name, msg.attachment_url, msg.id, 'left');
+                        }
+                    });
+
+                    //    ajax call to mark new messages as read
+                    $.ajax({
+                        url: '/mark-as-read',
+                        type: 'POST',
+                        data: {user: e.userId},
+                        success: function (response) {
+                            console.log(response);
+                        }
+                    });
+                    //    ajax call to mark new messages as read
+
+                }
+                if ($('#activeBtn').hasClass('active')) {
+                    loadActiveChats();
+                } else if ($('#archiveBtn').hasClass('active')) {
+                    loadArchiveChats();
+                }
+
+            //    show notifications
+            //    show notifications
+            });
+    }
 
     loadActiveChats();
     $("#chatBox").hide();
@@ -92,6 +134,7 @@ $(document).ready(function() {
             data-user-lastName="${user.last_name}"
             data-user-image="${imageUrl}"
             data-user-email="${user.email}"
+            data-unread-count="${user.unread_count}"
         >
             <div class="d-flex align-items-center gap-3 border-0 bg-transparent user-info hover-bg"
                  style="min-height: 50px;">
@@ -108,20 +151,33 @@ $(document).ready(function() {
                     </small>
                 </div>
             </div>
-            <div class="dropdown">
-                <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                    &vellip;
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item delete-chats" data-chat-id="${user.chat.id}">Delete</a></li>
-                    <li><a class="dropdown-item archive-chat" data-chat-id="${user.chat.id}">Archive Chat</a> </li>
-                </ul>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <div class="unread-count" data-unread-messages="${user.unread_count}">
+                    ${user.unread_count > 0 ? `
+                        <span class="badge bg-danger rounded-pill unread-badge"
+                              style="font-size: 0.75rem; min-width: 22px; text-align: center;">
+                            ${user.unread_count}
+                        </span>
+                    ` : ''}
+                </div>
+
+
+                <div class="dropdown">
+                    <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        &vellip;
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item delete-chats" data-chat-id="${user.chat.id}">Delete</a></li>
+                        <li><a class="dropdown-item archive-chat" data-chat-id="${user.chat.id}">Archive Chat</a></li>
+                    </ul>
+                </div>
             </div>
         </li>
         `;
     }
-
     $("#chatSearch").on("input", function () {
        let searchValue = $(this).val();
        let searchFrom;
@@ -204,15 +260,28 @@ $(document).ready(function() {
                     <small class="text-muted text-truncate d-block">${latestMessage}</small>
                 </div>
             </div>
-            <div class="dropdown">
-                <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                    &vellip;
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item delete-chats" data-chat-id="${user.chat.id}">Delete</a></li>
-                    <li><a class="dropdown-item unarchive-chat" data-chat-id="${user.chat.id}">Unarchive Chat</a></li>
-                </ul>
+                        <div class="d-flex align-items-center gap-2">
+
+                <div class="unread-count" data-unread-messages="${user.unread_count}">
+                    ${user.unread_count > 0 ? `
+                        <span class="badge bg-danger rounded-pill unread-badge"
+                              style="font-size: 0.75rem; min-width: 22px; text-align: center;">
+                            ${user.unread_count}
+                        </span>
+                    ` : ''}
+                </div>
+
+
+                <div class="dropdown">
+                    <button class="dropdown-menu-button btn btn-sm btn-light border-0" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        &vellip;
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item delete-chats" data-chat-id="${user.chat.id}">Delete</a></li>
+                        <li><a class="dropdown-item unarchive-chat" data-chat-id="${user.chat.id}">Unarchive Chat</a></li>
+                    </ul>
+                </div>
             </div>
         </li>
     `;
@@ -519,6 +588,7 @@ $(document).ready(function() {
         let userEmail = $(this).data('user-email');
         let userRole = $(this).parents("#chatPage").data('user');
         let chatWindow = $("#chatWindow");
+        $(this).find(".unread-count").empty();
 
         $.ajax({
            url: '/load-messages',

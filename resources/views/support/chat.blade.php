@@ -13,7 +13,6 @@
             {{ session('danger') }}
         </div>
     @endif
-
     <div class="container-fluid vh-90"
          id="chatPage"
          data-user="{{ auth()->user()->hasRole('admin') ? 'admin' : (auth()->user()->hasRole('agent') ? 'agent' : '') }}"

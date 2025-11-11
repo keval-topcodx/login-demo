@@ -8,3 +8,16 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+Broadcast::channel('support', function ($user) {
+    return $user->getRoleNames()->contains(function ($role) {
+        return in_array($role, ['admin', 'agent']);
+    });
+});
+
+
+//Broadcast::channel('support.{userId}', function ($user, $userId) {
+//    return $user->getRoleNames()->contains(function ($role) {
+//        return in_array($role, ['admin', 'agent']);
+//    });
+//});

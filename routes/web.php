@@ -6,6 +6,7 @@ use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\GiftCardController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
@@ -102,7 +103,7 @@ Route::post('/add-to-order', [OrderController::class, 'addToOrder'])->name('orde
 Route::post('/suggest-products', [ProductController::class, 'suggestProducts'])->name('suggest-products');
 Route::post('/suggest-variants', [ProductController::class, 'suggestVariants'])->name('suggest-variants');
 
-Route::resource('chat', ChatController::class);
+Route::resource('chat', ChatController::class)->middleware(['role:admin|agent']);
 Route::post('/search-user', [UserController::class, 'searchUser'])->name('search-user');
 
 Route::post('/start-new-chat', [ChatController::class, 'startNewChat'])->name('start-new-chat');
@@ -117,3 +118,7 @@ Route::post('/unarchive-chat', [ChatController::class, 'unArchiveChat'])->name('
 Route::post('/load-archived-chats', [ChatController::class, 'loadArchivedChats'])->name('load-archived-chats');
 Route::post('/load-active-chats', [ChatController::class, 'loadActiveChats'])->name('load-active-chats');
 Route::post('/chat-search', [ChatController::class, 'chatSearch'])->name('chat-search');
+Route::post('/mark-as-read', [ChatController::class, 'markAsRead'])->name('mark-as-read');
+
+Route::post('/get-all-notifications', [NotificationController::class, 'getAllNotifications'])->name('get-all-notifications');
+Route::post('/mark-notification-as-read', [NotificationController::class, 'markNotificationAsRead'])->name('mark-notification-as-read');

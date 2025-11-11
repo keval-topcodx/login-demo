@@ -16,13 +16,15 @@ class MessageSent implements ShouldBroadcast
 
     public $message;
     public $userId;
+    public $sender;
     /**
      * Create a new event instance.
      */
-    public function __construct($message, $userId)
+    public function __construct($message, $userId, $sender)
     {
         $this->message = $message;
         $this->userId = $userId;
+        $this->sender = $sender;
     }
 
     /**
@@ -32,10 +34,14 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return [
-//            new Channel('display-message'),
-            new PrivateChannel('user.' . $this->userId),
-        ];
+        if ($this->sender === 'user') {
+            return [new PrivateChannel('support')];
+        }
+        if ($this->sender === 'admin' || $this->sender === 'agent') {
+            return [new PrivateChannel('user.' . $this->userId)];
+        }
+
+        return [];
     }
 
     public function broadcastAs(): string

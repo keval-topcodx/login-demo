@@ -93,4 +93,9 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword,
         return $this->hasOne(Chat::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->chaperone();
+    }
+
 }

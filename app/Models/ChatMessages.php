@@ -15,6 +15,7 @@ class ChatMessages extends Model
         'attachment_url',
         'created_at',
         'updated_at',
+        'unread',
     ];
 
     public function chat(): BelongsTo

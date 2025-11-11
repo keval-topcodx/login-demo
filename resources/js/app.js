@@ -19,5 +19,3 @@ window.Echo = new Echo({
 window.$ = window.jQuery = $;
 window.Swal = Swal;
 
-
-

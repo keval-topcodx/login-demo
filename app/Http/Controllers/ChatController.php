@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
+use App\Events\NewNotification;
 use App\Models\Chat;
 use App\Models\ChatMessages;
 use App\Models\User;
@@ -172,6 +173,7 @@ class ChatController extends Controller
 
 //        repeat
             $chatMessage = [];
+            $notifications = [];
             if ($message) {
                 if ($sender == 'user') {
                     $chatMessage[] = $chat->messages()->create([
@@ -180,8 +182,9 @@ class ChatController extends Controller
                         'unread' => true
                     ]);
 
-                    $user->notifications()->create([
-                       'message' => $message
+                    $notifications[] = $user->notifications()->create([
+                        'user_type' => $sender,
+                        'message' => $message,
                     ]);
 
                 } else {
@@ -189,6 +192,10 @@ class ChatController extends Controller
                         'user_type' => $sender,
                         'message' => $message,
                         'unread' => false,
+                    ]);
+                    $notifications[] = $user->notifications()->create([
+                       'user_type' => $sender,
+                       'message' => $message,
                     ]);
                 }
 
@@ -208,8 +215,9 @@ class ChatController extends Controller
                             'unread' => true,
                         ]);
 
-                        $user->notifications()->create([
-                            'message' => 'Attachment: ' . $name . "Url: " . $url,
+                        $notifications[] = $user->notifications()->create([
+                            'user_type' => $sender,
+                            'message' => 'Attachment: ' . $name . " Url: " . $url,
                         ]);
                     } else {
                         $chatMessage[] = $chat->messages()->create([
@@ -218,13 +226,19 @@ class ChatController extends Controller
                             'attachment_url' => $url,
                             'unread' => false
                         ]);
+                        $notifications[] = $user->notifications()->create([
+                           'user_type' => $sender,
+                           'message' =>  'Attachment: ' . $name . " Url: " . $url,
+                        ]);
                     }
                 }
             }
             if($sender == 'admin' || $sender == 'agent') {
                 MessageSent::dispatch($chatMessage, $chat->user_id, $sender);
+                NewNotification::dispatch($notifications, $chat->id, $user, $sender, $userId);
             } else if($sender == 'user') {
                 MessageSent::dispatch($chatMessage, $chat->user_id, $sender);
+                NewNotification::dispatch($notifications, $chat->id, $user, $sender, $userId);
             }
             return response()->json([
                 'success' => true,

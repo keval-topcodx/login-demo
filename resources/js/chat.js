@@ -7,6 +7,8 @@ $.ajaxSetup({
 });
 
 $(document).ready(function() {
+
+    //code before url redirect
     let userId = $("#chatBox").data('user-id');
 
     if(userId) {
@@ -117,6 +119,61 @@ $(document).ready(function() {
                     response.users.forEach(function (user) {
                         $("#activeChats").append(getActiveChatHtml(user));
                     });
+                    //url string code
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const id = urlParams.get('userId');
+
+                    if (id) {
+                        let chatList = $(".user-with-chat-profile");
+                        chatList.each(function(index, el) {
+                            const item = $(el);
+                            if(item.data('user-id') == id) {
+                                let userId = item.data('user-id');
+                                let userFirstName = item.data('user-firstname');
+                                let userLastName = item.data('user-lastname');
+                                let userImage = item.data('user-image');
+                                let userEmail = item.data('user-email');
+                                let userRole = item.parents("#chatPage").data('user');
+                                let activeChat = $("#chatWindow");
+                                $(this).find(".unread-count").empty();
+
+                                $.ajax({
+                                    url: '/load-messages',
+                                    type: 'POST',
+                                    data: {id: userId, action: 'forSupport'},
+                                    success: function (response) {
+
+                                        activeChat.data('user-id', userId);
+                                        addChatTitle(userId, userImage, userFirstName, userLastName, userEmail);
+                                        $('#chatMessages').empty();
+                                        response.messages.forEach(function (message) {
+                                            const side = message['user_type'] === userRole ? 'right' : 'left';
+
+                                            if(message['message']) {
+                                                addMessage(message['message'], message.id , side);
+                                            } else if (message['attachment_name'] && message['attachment_url']) {
+                                                addAttachment(message['attachment_name'], message['attachment_url'], message.id , side);
+                                            }
+                                        });
+
+                                        addSendMessageForm();
+
+                                    }
+                                });
+
+                            }
+
+
+
+                        });
+
+                    } else {
+                        console.log("No chatId found in URL");
+                    }
+
+                    //url string code
+
                 }
             }
         })

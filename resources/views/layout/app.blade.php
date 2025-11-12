@@ -1,3 +1,6 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,44 +41,10 @@
         </div>
         <div class="d-flex align-items-center">
             <div class="dropdown d-inline">
-                @hasanyrole(['admin', 'agent'])
 
-                <div class="position-relative d-inline-block">
-                    <!-- Notification Button -->
-                    <button type="button" class="btn btn-light border position-relative" id="notifications">
-                        &#128229;
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="unreadCount">
-                        </span>
-                    </button>
+                @include('partials.notifications')
 
-                    <!-- Notification Dropdown -->
-                    <div id="notificationPanel" class="notification-panel shadow-lg rounded d-none">
-                        <div class="p-2 border-bottom bg-light d-flex justify-content-between align-items-center">
-                            <span class="fw-semibold">Notifications</span>
-                            <button class="btn btn-sm btn-outline-secondary py-0" id="clearNotifications">Clear</button>
-                        </div>
-
-                        <div class="notification-list">
-                            <!-- Example notifications -->
-{{--                            <div class="notification-item">--}}
-{{--                                <strong>John Doe</strong><br>--}}
-{{--                                <span class="text-muted small">Hello, I need help.</span>--}}
-{{--                            </div>--}}
-{{--                            <div class="notification-item unread">--}}
-{{--                                <strong>Jane Smith</strong><br>--}}
-{{--                                <span class="text-muted small">📎 File: invoice.pdf</span>--}}
-{{--                            </div>--}}
-{{--                            <div class="notification-item">--}}
-{{--                                <strong>Ravi Patel</strong><br>--}}
-{{--                                <span class="text-muted small">🖼️ Image received</span>--}}
-{{--                            </div>--}}
-                        </div>
-                    </div>
-                </div>
-
-
-                @endhasanyrole
-                <span class="me-3 text-muted dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="me-3 text-muted dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-user-id="{{auth()->user()->id}}">
                     Hello, <strong>{{ auth()->user()->first_name }}</strong>
                 </span>
                 <ul class="dropdown-menu" aria-labelledby="userDropdown">

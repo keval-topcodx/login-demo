@@ -6,21 +6,164 @@ $.ajaxSetup({
 });
 
 $(document).ready(function() {
-    Echo.private(`support`)
-    .listen('.message.sent', (e) => {
-        console.log("incoming message");
-        displayNotifications();
+    let authUserId = $("#userDropdown").data('user-id');
+    if(authUserId) {
+        Echo.private('notification.' + authUserId)
+            .listen('.notification-received', (e) => {
+                let html = '';
+                const badge = $("#unreadCount");
+                let currentCount = parseInt(badge.text()) || 0;
+                let newNotifications = Array.isArray(e.notification) ? e.notification.length : 1;
+                let updatedCount = currentCount + newNotifications;
+                badge.text(updatedCount);
+                if (updatedCount > 0) {
+                    badge.removeClass("d-none").addClass("d-block");
+                } else {
+                    badge.removeClass("d-block").addClass("d-none");
+                }
+
+                e.notification.forEach(msg => {
+                    let messageText = msg.message ?? '';
+                    let attachmentHtml = '';
+                    let textHtml = '';
+
+
+                    const match = messageText.match(/Attachment:\s*(.+?)\s*Url:\s*(.+)/i);
+
+                    if (match) {
+                        const name = match[1].trim();
+                        const url = match[2].trim();
+
+                        const ext = name.split('.').pop().toLowerCase();
+                        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+
+                        if (isImage) {
+                            attachmentHtml = `
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="${url}" alt="${name}"
+                                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                            <span class="text-truncate small" style="max-width: 200px;">${name}</span>
+                        </div>
+                    `;
+                        } else {
+                            attachmentHtml = `
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-paperclip fs-5 text-secondary"></i>
+                            <span class="text-truncate small" style="max-width: 200px;">${name}</span>
+                        </div>
+                    `;
+                        }
+                    } else {
+
+                        textHtml = `<span class="text-muted small d-block">${messageText}</span>`;
+                    }
+
+
+                    const user = msg.user ?? e.sender ?? {};
+                    const fullName = `${e.user_type.charAt(0).toUpperCase() + e.user_type.slice(1)}`;
+
+                    html += `
+                <a class="text-decoration-none text-black notification-anchor">
+                    <div class="notification-item user-notification p-2 mb-2 rounded bg-warning-subtle unread"
+                         data-notification-id="${msg.id}"
+                         data-user-id="${msg.user_id}"
+                         style="cursor:pointer;">
+                        <strong>${fullName || 'Unknown User'}</strong><br>
+                        ${attachmentHtml || textHtml}
+                    </div>
+                </a>
+            `;
+                });
+                $("#notificationContainer").prepend(html);
+            });
+    }
+    Echo.private(`notification`)
+        .listen('.notification-received', (e) => {
+            let html = '';
+            const badge = $("#unreadCount");
+            let currentCount = parseInt(badge.text()) || 0;
+            let newNotifications = Array.isArray(e.notification) ? e.notification.length : 1;
+            let updatedCount = currentCount + newNotifications;
+            badge.text(updatedCount);
+            if (updatedCount > 0) {
+                badge.removeClass("d-none").addClass("d-block");
+            } else {
+                badge.removeClass("d-block").addClass("d-none");
+            }
+
+            e.notification.forEach(msg => {
+                let messageText = msg.message ?? '';
+                let attachmentHtml = '';
+                let textHtml = '';
+
+
+                const match = messageText.match(/Attachment:\s*(.+?)\s*Url:\s*(.+)/i);
+
+                if (match) {
+                    const name = match[1].trim();
+                    const url = match[2].trim();
+
+                    const ext = name.split('.').pop().toLowerCase();
+                    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+
+                    if (isImage) {
+                        attachmentHtml = `
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="${url}" alt="${name}"
+                                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                            <span class="text-truncate small" style="max-width: 200px;">${name}</span>
+                        </div>
+                    `;
+                    } else {
+                        attachmentHtml = `
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-paperclip fs-5 text-secondary"></i>
+                            <span class="text-truncate small" style="max-width: 200px;">${name}</span>
+                        </div>
+                    `;
+                    }
+                } else {
+
+                    textHtml = `<span class="text-muted small d-block">${messageText}</span>`;
+                }
+
+
+                const user = msg.user ?? e.sender ?? {};
+                const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
+
+                html += `
+                <a class="text-decoration-none text-black notification-anchor">
+                    <div class="notification-item p-2 mb-2 rounded bg-warning-subtle unread"
+                         data-notification-id="${msg.id}"
+                         data-user-id="${msg.user_id}"
+                         style="cursor:pointer;">
+                        <strong>${fullName || 'Unknown User'}</strong><br>
+                        ${attachmentHtml || textHtml}
+                    </div>
+                </a>
+            `;
+            });
+            $("#notificationContainer").prepend(html);
+        });
+
+    $(document).on('click', '.notification-link', function (e) {
+        e.preventDefault();
+        console.log("clicked");
+        // const chatId = $(this).data('chat-id');
+        // if (chatId) {
+        //     window.location.href = `/chat?chatId=${chatId}`;
+        // }
     });
 
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('#notificationPanel, #notifications').length) {
-            $('#notificationPanel').addClass('d-none');
+        if (!$(e.target).closest('#notificationContainer, #notifications').length) {
+            $("#notificationContainer").hide();
         }
     });
 
     $(document).on("click", "#notifications", function(e) {
         e.stopPropagation();
-        $('#notificationPanel').toggleClass('d-none');
+        $("#notificationContainer").show();
     });
 
     $(document).on("click", ".notification-item", function() {
@@ -32,92 +175,20 @@ $(document).ready(function() {
            data: {id : notificationId},
            success: function (response) {
                if(response.success) {
-                   notificationItem.removeClass("unread");
+                   notificationItem.removeClass("unread bg-warning-subtle");
+                   notificationItem.addClass("bg-white");
                    let countElement = $("#unreadCount");
                    let unreadCount = countElement.text() || 0;
                    if (unreadCount > 0) {
                        countElement.text(unreadCount - 1);
                    }
-                   window.location.href = `/chat?chatId=${response.chat.id}`;
+                   if(!notificationItem.hasClass("user-notification")) {
+                       window.location.href = `/chat?userId=${response.chat.user_id}`;
+                   }
+
                }
            }
        });
     });
-    displayNotifications();
-    function displayNotifications() {
-        $.ajax({
-            url: '/get-all-notifications',
-            type: 'POST',
-            data: { data: '' },
-            success: function (response) {
-                if (response.success) {
-                    let html = '';
-
-
-                    response.notifications.forEach(function (notification) {
-                        let msg = notification.message;
-                        let attachmentHtml = '';
-                        let textHtml = '';
-
-
-                        if (msg.startsWith('Attachment:')) {
-                            const match = msg.match(/Attachment:\s*(.+?)\s*Url:\s*(.+)/);
-
-                            if (match) {
-                                const name = match[1].trim();
-                                const url = match[2].trim();
-
-                                const ext = name.split('.').pop().toLowerCase();
-                                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-
-                                if (isImage) {
-                                    attachmentHtml = `
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="${url}" alt="${name}" class="rounded-circle border notification-image" width="35" height="35" style="object-fit:cover;">
-                                        <span class="small text-muted">${name}</span>
-                                    </div>
-                                `;
-                                } else {
-                                    attachmentHtml = `
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-paperclip text-secondary"></i>
-                                        <a href="${url}" target="_blank" class="small text-muted text-decoration-none">${name}</a>
-                                    </div>
-                                `;
-                                }
-                            }
-                        } else {
-                            textHtml = `<span class="text-muted small">${msg}</span>`;
-                        }
-
-
-                        html += `
-                            <div class="notification-item ${notification.read ? '' : 'unread'}" data-notification-id="${notification.id}" data-user-id="${notification.user_id}">
-                                <strong>${notification.user.first_name} ${notification.user.last_name}</strong><br>
-                                ${attachmentHtml || textHtml}
-                            </div>
-                    `;
-                    });
-
-
-                    $('.notification-list').html(html);
-
-                    $('#unreadCount').text(response.unread_count > 0 ? response.unread_count : '').toggle(response.unread_count > 0);
-                } else {
-
-                    $('.notification-list').html(`
-                    <div class="text-center text-muted p-3">No notifications.</div>
-                `);
-                    $('#unreadCount').text('').hide();
-                }
-            },
-            error: function () {
-                $('.notification-list').html(`
-                <div class="text-danger text-center p-3">Error loading notifications.</div>`);
-            }
-        });
-    }
-
-
 
 });
